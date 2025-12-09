@@ -7,6 +7,6 @@
     <title>Recipe Backend</title>
 </head>
 <body>
-    <h1> This is for only backend</h1>
+    <h1> This is for only backend laravel</h1>
 </body>
 </html>
