@@ -6,27 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('recipes', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->string('category');           // must provide in seeder
             $table->string('image')->nullable();
             $table->string('time');
             $table->string('difficulty');
             $table->string('calories');
-            $table->json('ingredients');
-            $table->json('steps');
-            $table->timestamps();
+            $table->longText('ingredients');      // store JSON
+            $table->longText('steps');            // store JSON
+            $table->timestamps();                 // created_at and updated_at
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('recipes');

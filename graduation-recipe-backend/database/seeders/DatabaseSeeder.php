@@ -10,6 +10,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        \App\Models\Recipe::factory(10)->create();
+        // \App\Models\Recipe::factory(10)->create();
+        $this->call(RecipeSeeder::class);
+
     }
 }
