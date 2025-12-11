@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\ImageController;
 use Illuminate\Http\Request;
@@ -13,13 +14,16 @@ use Illuminate\Http\Request;
 
 
 
-// Recipe Routes***(first sprint)***
+// Recipe Routes***( 1 .first sprint)***
 Route::get('/test', [RecipeController::class, 'test']);
 Route::get('/recipes', [RecipeController::class, 'index']);
 Route::get('/recipes/{id}', [RecipeController::class, 'show']);
 Route::post('/recipes', [RecipeController::class, 'store']);
 
 
+// Recipe Routes***( 2 . second sprint)***
+Route::get('/ingredients', [IngredientController::class, 'index']);
+Route::post('/recipes/search', [RecipeController::class, 'search']);
 
 
 
