@@ -14,11 +14,11 @@ class FirstController extends Controller
 {
     public function Master()
     {
-        return view('layouts/master');
+        return view('welcome');
     }
      public function home()
     {
-        return view('layouts/home');
+        return view('layouts.home');
     }
 
 

@@ -37,7 +37,7 @@ Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy'])-
 
 /////////////////////////////////
 
-Route::get('/', [FirstController::class, 'Master'])->name('master');
+Route::get('/', [FirstController::class, 'Master'])->name('welcome');
 Route::get('/home', [FirstController::class, 'home'])->name('home');
 Route::get('/cook', [FirstController::class, 'CookWhatYouHave'])->name('cook');
 Route::post('/cook/search', [FirstController::class, 'SearchMeals'])->name('cook.search');
