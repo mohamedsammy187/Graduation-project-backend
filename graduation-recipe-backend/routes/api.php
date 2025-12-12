@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\RecipeSearchController;
+use App\Http\Controllers\PantryController;
 use App\Http\Controllers\ImageController;
 use Illuminate\Http\Request;
 
@@ -20,17 +21,19 @@ use Illuminate\Http\Request;
 Route::get('/test', [RecipeController::class, 'test']);
 Route::get('/recipes', [RecipeController::class, 'index']);
 
-
+// Recipe Search Route for second sprint
 Route::post('/recipes/search', [RecipeSearchController::class, 'search']);
+//Recipe Search Route for second sprint "searchGet"
+Route::get('/recipes/search', [RecipeSearchController::class, 'searchGet']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
 Route::get('/recipes/{id}', [RecipeController::class, 'show']);
 Route::post('/recipes', [RecipeController::class, 'store']);
 
-
-
-
-
+//pantry routes
+Route::get('user/pantry', [PantryController::class, 'index']);
+Route::post('user/pantry', [PantryController::class, 'store']);
+Route::delete('user/pantry/{id}', [PantryController::class, 'destroy']);
 
 
 
