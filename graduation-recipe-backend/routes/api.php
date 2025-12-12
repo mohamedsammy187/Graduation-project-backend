@@ -21,12 +21,11 @@ Route::get('/test', [RecipeController::class, 'test']);
 Route::get('/recipes', [RecipeController::class, 'index']);
 
 
-Route::get('/recipes/search', [RecipeSearchController::class, 'search']);
+Route::post('/recipes/search', [RecipeSearchController::class, 'search']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
 Route::get('/recipes/{id}', [RecipeController::class, 'show']);
 Route::post('/recipes', [RecipeController::class, 'store']);
-// Route::post('/recipes/search', [RecipeController::class, 'search']);
 
 
 
