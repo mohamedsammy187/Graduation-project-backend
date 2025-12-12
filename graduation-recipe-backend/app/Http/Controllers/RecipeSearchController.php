@@ -32,8 +32,33 @@ public function search(Request $request)
 }
 
 //searchGet function for second sprint "searchGet"
-public function searchGet(Request $request){
-    
+public function searchGet(Request $request)
+{
+    $ingredients = $request->query('ingredients');
+
+    if (!$ingredients) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'ingredients required'
+        ], 400);
+    }
+
+    // If sent like ?ingredients=Salt,Tomato
+    if (is_string($ingredients)) {
+        $ingredients = explode(',', $ingredients);
+    }
+
+    $ingredientIds = Ingredient::whereIn('name', $ingredients)->pluck('id');
+
+    $recipes = Recipe::whereHas('ingredients', function ($q) use ($ingredientIds) {
+        $q->whereIn('ingredient_id', $ingredientIds);
+    })->with('ingredients')->get();
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $recipes
+    ]);
 }
+
 
 }
