@@ -32,6 +32,8 @@ public function search(Request $request)
 }
 
 //searchGet function for second sprint "searchGet"
-
+public function searchGet(Request $request){
+    
+}
 
 }

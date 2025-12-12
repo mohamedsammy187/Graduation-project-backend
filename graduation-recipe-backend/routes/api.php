@@ -7,6 +7,7 @@ use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\RecipeSearchController;
 use App\Http\Controllers\PantryController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ImageController;
 use Illuminate\Http\Request;
 
@@ -34,6 +35,10 @@ Route::post('/recipes', [RecipeController::class, 'store']);
 Route::get('user/pantry', [PantryController::class, 'index']);
 Route::post('user/pantry', [PantryController::class, 'store']);
 Route::delete('user/pantry/{id}', [PantryController::class, 'destroy']);
+
+//chat route
+Route::post('user/chat', [ChatController::class, 'handle']);
+
 
 
 
