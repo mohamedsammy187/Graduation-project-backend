@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\RecipeController;
+use App\Http\Controllers\RecipeSearchController;
 use App\Http\Controllers\ImageController;
 use Illuminate\Http\Request;
 
@@ -12,18 +13,23 @@ use Illuminate\Http\Request;
 //     return response()->json(['message' => 'Welcome to the API']);
 // });
 
+// Recipe Routes***( 2 . second sprint)***
 
 
 // Recipe Routes***( 1 .first sprint)***
 Route::get('/test', [RecipeController::class, 'test']);
 Route::get('/recipes', [RecipeController::class, 'index']);
+
+
+Route::get('/recipes/search', [RecipeSearchController::class, 'search']);
+Route::get('/ingredients', [IngredientController::class, 'index']);
+
 Route::get('/recipes/{id}', [RecipeController::class, 'show']);
 Route::post('/recipes', [RecipeController::class, 'store']);
+// Route::post('/recipes/search', [RecipeController::class, 'search']);
 
 
-// Recipe Routes***( 2 . second sprint)***
-Route::get('/ingredients', [IngredientController::class, 'index']);
-Route::post('/recipes/search', [RecipeController::class, 'search']);
+
 
 
 
