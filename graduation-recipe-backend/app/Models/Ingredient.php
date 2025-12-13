@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ingredient extends Model
 {
+    //Ingredient model representing ingredients in recipes
     protected $fillable = ['name'];
     
     public function recipes()
