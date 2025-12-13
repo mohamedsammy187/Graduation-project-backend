@@ -30,6 +30,7 @@
     <p>
         //For get pantry items
         GET http://127.0.0.1:8000/api/user/pantry
+        like:( http://127.0.0.1:8000/api/recipes/search?ingredients=Salt,Tomato )
     </p>
     <p>
         //For post pantry items

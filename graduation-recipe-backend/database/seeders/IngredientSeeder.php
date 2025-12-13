@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\ingredient;
+use App\Models\Ingredient;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -21,7 +21,7 @@ class IngredientSeeder extends Seeder
             "Olive Oil", "Lemon", "Basil", "Parsley", "Chili Flakes"
         ];
         foreach ($ingredients as $name){
-            ingredient::firstorCreate(['name' => $name]);
+            Ingredient::firstOrCreate(['name' => $name]);
         }
     }
 }

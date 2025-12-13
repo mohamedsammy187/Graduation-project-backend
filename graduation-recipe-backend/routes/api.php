@@ -24,6 +24,7 @@ Route::get('/recipes', [RecipeController::class, 'index']);
 
 // Recipe Search Route for second sprint
 Route::post('/recipes/search', [RecipeSearchController::class, 'search']);
+
 //Recipe Search Route for second sprint "searchGet"
 Route::get('/recipes/search', [RecipeSearchController::class, 'searchGet']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
