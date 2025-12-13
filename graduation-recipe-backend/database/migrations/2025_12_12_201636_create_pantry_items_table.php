@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignId('ingredient_id')->nullable()->constrained()->nullOnDelete();
             $table->date('added_date')->useCurrent();
             $table->timestamps();
+
+            $table->unique(['user_id', 'item_name']);               
         });
     }
 

@@ -18,9 +18,14 @@ class PantryController extends Controller
         $request->validate([
             'item_name' => 'required|string'
         ]);
+        $userId = 1; // static user
+        $existing = PantryItem::where('user_id', $userId)->where('item_name',$request->item_name)->first();
+        if ($existing) {
+            return response()->json(['status'=>'error','message'=>'Item already exists'], 409);
+        }
 
         $item = PantryItem::create([
-            'user_id' => 1,
+            'user_id' => $userId,
             'item_name' => $request->item_name,
             'ingredient_id' => $request->ingredient_id
         ]);
