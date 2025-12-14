@@ -7,13 +7,13 @@ use Illuminate\Http\Request;
 
 class FavoriteController extends Controller
 {
-    private $userId = 1; // static for now
+
 
     // GET /favorites
-    public function index()
+    public function index(Request $request)
     {
         return Favorite::with('recipe')
-            ->where('user_id', $this->userId)
+            ->where('user_id', $request->user()->id)
             ->get();
     }
 
@@ -25,7 +25,7 @@ class FavoriteController extends Controller
         ]);
 
         $favorite = Favorite::firstOrCreate([
-            'user_id' => $this->userId,
+            'user_id' => $request->user()->id,
             'recipe_id' => $request->recipe_id
         ]);
 
@@ -36,9 +36,9 @@ class FavoriteController extends Controller
     }
 
     // DELETE /favorites/{recipe_id}
-    public function destroy($recipe_id)
+    public function destroy(Request $request, $recipe_id)
     {
-        Favorite::where('user_id', $this->userId)
+        Favorite::where('user_id', $request->user()->id)
             ->where('recipe_id', $recipe_id)
             ->delete();
 

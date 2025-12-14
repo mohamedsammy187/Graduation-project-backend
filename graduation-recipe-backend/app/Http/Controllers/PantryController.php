@@ -7,9 +7,10 @@ use Illuminate\Http\Request;
 
 class PantryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $items = PantryItem::where('user_id', 1)->get(); // static user
+        $user = $request->user();
+        $items = PantryItem::where('user_id', $user->id)->get();
         return response()->json(['status'=>'success','data'=>$items]);
     }
 
@@ -18,14 +19,14 @@ class PantryController extends Controller
         $request->validate([
             'item_name' => 'required|string'
         ]);
-        $userId = 1; // static user
-        $existing = PantryItem::where('user_id', $userId)->where('item_name',$request->item_name)->first();
+        $user = $request->user();
+        $existing = PantryItem::where('user_id', $user->id)->where('item_name',$request->item_name)->first();
         if ($existing) {
             return response()->json(['status'=>'error','message'=>'Item already exists'], 409);
         }
 
         $item = PantryItem::create([
-            'user_id' => $userId,
+            'user_id' => $user->id,
             'item_name' => $request->item_name,
             'ingredient_id' => $request->ingredient_id
         ]);
@@ -33,9 +34,10 @@ class PantryController extends Controller
         return response()->json(['status'=>'success','data'=>$item]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $item = PantryItem::where('user_id',1)->where('id', $id)->first();
+        $user = $request->user();
+        $item = PantryItem::where('user_id', $user->id)->where('id', $id)->first();
 
         if (!$item) {
             return response()->json(['status'=>'error','message'=>'Item not found'], 404);

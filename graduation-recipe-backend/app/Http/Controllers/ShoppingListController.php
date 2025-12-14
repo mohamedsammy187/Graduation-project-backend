@@ -7,16 +7,18 @@ use Illuminate\Http\Request;
 
 class ShoppingListController extends Controller
 {
-    private $userId = 1;
-
+   
     // GET /shopping-list
-    public function index()
+    public function index(Request $request)
+    
     {
-        return ShoppingItem::where('user_id', $this->userId)->get();
+        $user = $request->user();
+        return ShoppingItem::where('user_id', $user->id)->get();
     }
 
     // POST /shopping-list
     public function store(Request $request)
+    
     {
         $request->validate([
             'item_name' => 'required|string',
@@ -25,7 +27,7 @@ class ShoppingListController extends Controller
 
         $item = ShoppingItem::firstOrCreate(
             [
-                'user_id' => $this->userId,
+                'user_id' => $request->user()->id,
                 'item_name' => $request->item_name
             ],
             [
@@ -42,7 +44,8 @@ class ShoppingListController extends Controller
     // PATCH /shopping-list/{id}
     public function toggle(Request $request, $id)
     {
-        $item = ShoppingItem::where('user_id', $this->userId)
+        $user = $request->user();
+        $item = ShoppingItem::where('user_id', $user->id)
             ->where('id', $id)
             ->firstOrFail();
 
@@ -54,9 +57,10 @@ class ShoppingListController extends Controller
     }
 
     // DELETE /shopping-list/{id}
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        ShoppingItem::where('user_id', $this->userId)
+        $user = $request->user();
+        ShoppingItem::where('user_id', $user->id)
             ->where('id', $id)
             ->delete();
 
