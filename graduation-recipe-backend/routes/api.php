@@ -45,6 +45,11 @@ Route::post('/chat', [ChatController::class, 'handle']);
 Route::post('/ask', [LLMController::class, 'ask']);
 
 
+//favorite routes
+Route::get('/favorites', [App\Http\Controllers\FavoriteController::class, 'index']);
+Route::post('/favorites', [App\Http\Controllers\FavoriteController::class, 'store']);
+Route::delete('/favorites/{recipe_id}', [App\Http\Controllers\FavoriteController::class, 'destroy']);
+
 
 
 
