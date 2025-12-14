@@ -44,13 +44,27 @@
     <p>
         //simple chat route
         GET http://127.0.0.1:8000/api/chat
-        
-        
+
+
     </p>
     <p>
         //chat for model (Will be upgraded soon)
         GET http://127.0.0.1:8000/api/ask
 
+    </p>
+    <p>
+        //favorite routes
+        GET http://127.0.0.1:8000/api/favorites
+    </p>
+    <p>
+    <p>
+        //favorite routes
+        POST http://127..0.0.1:8000/api/favorites
+    </p>
+    <p>
+        //favorite routes
+        DELETE http://127..0.0.1:8000/api/favorites/{recipe_id}
+    </p>    
     </p>
 </body>
 

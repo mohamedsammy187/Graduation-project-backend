@@ -8,6 +8,7 @@ use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\RecipeSearchController;
 use App\Http\Controllers\PantryController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\ShoppingListController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LLMController;
 use Illuminate\Http\Request;
@@ -49,6 +50,13 @@ Route::post('/ask', [LLMController::class, 'ask']);
 Route::get('/favorites', [App\Http\Controllers\FavoriteController::class, 'index']);
 Route::post('/favorites', [App\Http\Controllers\FavoriteController::class, 'store']);
 Route::delete('/favorites/{recipe_id}', [App\Http\Controllers\FavoriteController::class, 'destroy']);
+
+//shopping list routes
+Route::get('/shopping-list', [ShoppingListController::class, 'index']);
+Route::post('/shopping-list', [ShoppingListController::class, 'store']);
+Route::patch('/shopping-list/{id}', [ShoppingListController::class, 'toggle']);
+Route::delete('/shopping-list/{id}', [ShoppingListController::class, 'destroy']);
+
 
 
 
