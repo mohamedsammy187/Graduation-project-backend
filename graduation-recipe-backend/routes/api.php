@@ -9,6 +9,7 @@ use App\Http\Controllers\RecipeSearchController;
 use App\Http\Controllers\PantryController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\LLMController;
 use Illuminate\Http\Request;
 
 // Route::get('/test', function () {
@@ -37,8 +38,11 @@ Route::get('user/pantry', [PantryController::class, 'index']);
 Route::post('user/pantry', [PantryController::class, 'store']);
 Route::delete('user/pantry/{id}', [PantryController::class, 'destroy']);
 
-//chat route
-Route::post('user/chat', [ChatController::class, 'handle']);
+//simple chat route 
+Route::post('/chat', [ChatController::class, 'handle']);
+
+//chat for model (Will be upgraded)
+Route::post('/ask', [LLMController::class, 'ask']);
 
 
 
