@@ -64,7 +64,19 @@
     <p>
         //favorite routes
         DELETE http://127..0.0.1:8000/api/favorites/{recipe_id}
-    </p>    
+    </p>
+    <p>
+        //register routes
+        POST http://127..0.0.1:8000/api/register
+    </p>  
+    <p>
+        //Logiin routes
+        POST http://127..0.0.1:8000/api/login
+    </p>
+    <p>
+        //logout routes 
+        POST http://127..0.0.1:8000/api/logout
+    </p>          
     </p>
 </body>
 
