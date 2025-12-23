@@ -78,7 +78,9 @@
         POST http://127..0.0.1:8000/api/logout
     </p>          
     <p>
-        //searching by slug "more ingredients"
+        //http://127.0.0.1:8000/api/ask then it will create you a link.
+        //first ask with { "prompt": "I want something with Grilled Chicken" } ->body in postman.
+        //searching by slug "more ingredients".
         GET http://127..0.0.1:8000/api//recipes/slug/{slug}
     </p>
     </p>

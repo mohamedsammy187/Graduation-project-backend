@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use App\Models\Recipe;
 
 class LLMController extends Controller
 {
@@ -15,14 +16,22 @@ class LLMController extends Controller
             $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
 
             // 1. Get recipes from DB
-            $recipes = DB::table('recipes')->get();
+            $recipes = Recipe::all();
 
             // 2. Build recipes context
             $recipesText = "";
             foreach ($recipes as $recipe) {
-                $ingredients = implode(', ', json_decode($recipe->ingredients, true) ?? []);
-                $steps = implode(' | ', json_decode($recipe->steps, true) ?? []);
 
+                $ingredientsArr = json_decode($recipe->ingredients, true) ?? [];
+                $stepsArr = json_decode($recipe->steps, true) ?? [];
+
+                $ingredients = implode(', ', $ingredientsArr);
+                $steps = implode(' | ', $stepsArr);
+
+                // ✅ build link per recipe
+                $link = url("/api/recipes/slug/{$recipe->slug}");
+
+                $recipesText .= "Link: {$link}\n";
                 $recipesText .= "Recipe: {$recipe->title}\n";
                 $recipesText .= "Ingredients: {$ingredients}\n";
                 $recipesText .= "Steps: {$steps}\n\n";
@@ -35,7 +44,7 @@ class LLMController extends Controller
 You are a recipe assistant.
 You must answer ONLY using the recipes provided below.
 Always include the recipe link when suggesting one.
-List ingredients clearly for shooping.
+When recommending a recipe, list its ingredients clearly for a shopping list.
 If the answer is not in the recipes, say:
 'Sorry, I don't have this information in my recipes database.'
 
@@ -57,7 +66,6 @@ User question: {$userQuestion}
             ]);
 
             return response()->json($response->json(), $response->status());
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
