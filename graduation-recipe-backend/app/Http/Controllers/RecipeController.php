@@ -16,7 +16,7 @@ class RecipeController extends Controller
     public function index()
     {
         return response()->json([
-            'data' => Recipe::select('id', 'title', 'image', 'time', 'difficulty', 'calories', 'ingredients')->get()
+            'data' => Recipe::select('id', 'title', 'image', 'time', 'difficulty', 'calories', 'ingredients','slug')->get()
         ]);
     }
 
@@ -25,12 +25,19 @@ class RecipeController extends Controller
         $recipe = Recipe::findOrFail($id);
         return response()->json($recipe);
     }
+    public function showrecipe($slug)
+    {
+        $recipe = Recipe::where('slug', $slug)->first();
+        if(!$recipe){
+            return response()->json(['message' => 'Recipe not found'], 404);
+
+        }
+        return $recipe;
+    }
 
     public function store(Request $request)
     {
         $recipe = Recipe::create($request->all());
         return response()->json($recipe, 201);
     }
-
-
 }

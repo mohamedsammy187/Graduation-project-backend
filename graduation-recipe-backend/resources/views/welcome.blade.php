@@ -77,6 +77,10 @@
         //logout routes 
         POST http://127..0.0.1:8000/api/logout
     </p>          
+    <p>
+        //searching by slug "more ingredients"
+        GET http://127..0.0.1:8000/api//recipes/slug/{slug}
+    </p>
     </p>
 </body>
 

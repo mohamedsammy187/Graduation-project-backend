@@ -31,7 +31,9 @@ Route::post('/recipes/search', [RecipeSearchController::class, 'search']);
 Route::get('/recipes/search', [RecipeSearchController::class, 'searchGet']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
-Route::get('/recipes/{id}', [RecipeController::class, 'show']);
+Route::get('/recipes/{id}', [RecipeController::class, 'show'])->where('id','[0-9]');
+Route::get('/recipes/slug/{slug}', [RecipeController::class, 'showrecipe']);
+
 Route::post('/recipes', [RecipeController::class, 'store']);
 
 
