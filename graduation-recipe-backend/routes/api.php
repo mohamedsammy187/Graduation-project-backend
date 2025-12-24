@@ -29,12 +29,13 @@ Route::get('/recipes', [RecipeController::class, 'index']);
 Route::match(['get', 'post'], '/recipes/search', [RecipeSearchController::class, 'search']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
+Route::get('/recipes', [RecipeController::class, 'index']);
 Route::get('/recipes/{id}', [RecipeController::class, 'show'])->where('id','[0-9]');
 Route::get('/recipes/slug/{slug}', [RecipeController::class, 'showrecipe']);
 Route::post('/recipes', [RecipeController::class, 'store']);
 //match-pantry
 Route::post('/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
-Route::get('/shopping/migrate', [ShoppingListController::class, 'migrate']);
+Route::post('/shopping/migrate', [ShoppingListController::class, 'migrate']);
 
 //simple chat route 
 Route::post('/chat', [ChatController::class, 'handle']);
