@@ -7,6 +7,7 @@ use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\RecipeSearchController;
 use App\Http\Controllers\PantryController;
+use App\Http\Controllers\PantryMatchController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ShoppingListController;
 use App\Http\Controllers\ImageController;
@@ -24,18 +25,16 @@ use Illuminate\Http\Request;
 Route::get('/test', [RecipeController::class, 'test']);
 Route::get('/recipes', [RecipeController::class, 'index']);
 
-// Recipe Search Route for second sprint
-Route::post('/recipes/search', [RecipeSearchController::class, 'search']);
-
-//Recipe Search Route for second sprint "searchGet"
-Route::get('/recipes/search', [RecipeSearchController::class, 'searchGet']);
+//search
+Route::match(['get', 'post'], '/recipes/search', [RecipeSearchController::class, 'search']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
 Route::get('/recipes/{id}', [RecipeController::class, 'show'])->where('id','[0-9]');
 Route::get('/recipes/slug/{slug}', [RecipeController::class, 'showrecipe']);
-
 Route::post('/recipes', [RecipeController::class, 'store']);
-
+//match-pantry
+Route::post('/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
+Route::get('/shopping/migrate', [ShoppingListController::class, 'migrate']);
 
 //simple chat route 
 Route::post('/chat', [ChatController::class, 'handle']);

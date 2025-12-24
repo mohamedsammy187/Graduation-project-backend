@@ -4,60 +4,54 @@ namespace App\Http\Controllers;
 
 use App\Models\Recipe;
 use App\Models\Ingredient;
-
 use Illuminate\Http\Request;
 
 class RecipeSearchController extends Controller
 {
-    //search function for second sprint
     public function search(Request $request)
     {
-        $request->validate([
-            'ingredients' => 'required|array',
-        ]);
+        $query = Recipe::query()->with('ingredients');
 
-        $ingredientIds = Ingredient::whereIn('name', $request->ingredients)
-            ->pluck('id');
+        // 🔎 Search by title
+        if ($request->filled('q')) {
+            $query->where('title', 'like', '%' . $request->q . '%');
+        }
 
-        $recipes = Recipe::whereHas('ingredients', function ($q) use ($ingredientIds) {
-            $q->whereIn('ingredients.id', $ingredientIds);
-        })
-            ->with('ingredients')
-            ->get();
+        // 🥕 Search by ingredients
+        if ($request->filled('ingredients')) {
+            $ingredients = $request->ingredients;
+
+            if (is_string($ingredients)) {
+                $ingredients = explode(',', $ingredients);
+            }
+
+            $ingredientIds = Ingredient::whereIn('name', $ingredients)->pluck('id');
+
+            $query->whereHas('ingredients', function ($q) use ($ingredientIds) {
+                $q->whereIn('ingredients.id', $ingredientIds);
+            });
+        }
+
+        // 🗂 Category filter (only if column exists)
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // 🍽 Meal type filter
+        if ($request->filled('meal_type')) {
+            $query->where('meal_type', $request->meal_type);
+        }
+
+        // 🌡 Temperature filter
+        if ($request->filled('temperature')) {
+            $query->where('temperature', $request->temperature);
+        }
+
+        $recipes = $query->get();
 
         return response()->json([
             'status' => 'success',
-            'data' => $recipes
-        ]);
-    }
-
-
-    //searchGet function for second sprint "searchGet"
-    public function searchGet(Request $request)
-    {
-        $ingredients = $request->query('ingredients');
-
-        if (!$ingredients) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'ingredients required'
-            ], 400);
-        }
-
-        if (is_string($ingredients)) {
-            $ingredients = explode(',', $ingredients);
-        }
-
-        $ingredientIds = Ingredient::whereIn('name', $ingredients)->pluck('id');
-
-        $recipes = Recipe::whereHas('ingredients', function ($q) use ($ingredientIds) {
-            $q->whereIn('ingredients.id', $ingredientIds);
-        })
-            ->with('ingredients')
-            ->get();
-
-        return response()->json([
-            'status' => 'success',
+            'count' => $recipes->count(),
             'data' => $recipes
         ]);
     }

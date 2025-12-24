@@ -12,7 +12,9 @@ class RecipeSeeder extends Seeder
         $recipes = [
             [
                 'title' => 'Pancakes',
-                'category' => 'Breakfast',
+                'category' => 'breakfast',
+                'meal_type' => 'breakfast',
+                'temperature' => 'cold',
                 'image' => 'asset/img/pancakes.jpg',
                 'time' => '20 min',
                 'difficulty' => 'Easy',
@@ -32,7 +34,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Omelette',
-                'category' => 'Breakfast',
+                'category' => 'breakfast',
+                'meal_type' => 'breakfast',
+                'temperature' => 'hot',
                 'image' => 'asset/img/omelette.jpg',
                 'time' => '10 min',
                 'difficulty' => 'Easy',
@@ -52,7 +56,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'French Toast',
-                'category' => 'Breakfast',
+                'category' => 'breakfast',
+                'meal_type' => 'hot',
+                'temperature' => 'cold',
                 'image' => 'asset/img/french_toast.jpg',
                 'time' => '15 min',
                 'difficulty' => 'Easy',
@@ -72,7 +78,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Oats',
-                'category' => 'Breakfast',
+                'category' => 'breakfast',
+                'meal_type' => 'breakfast',
+                'temperature' => 'hot',
                 'image' => 'asset/img/oats.jpg',
                 'time' => '5 min',
                 'difficulty' => 'Easy',
@@ -90,7 +98,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Grilled Chicken',
-                'category' => 'Main Course',
+                'category' => 'lunch',
+                'meal_type' => 'lunch',
+                'temperature' => 'hot',
                 'image' => 'asset/img/grilled_chicken.jpg',
                 'time' => '40 min',
                 'difficulty' => 'Medium',
@@ -110,7 +120,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Pasta',
-                'category' => 'Main Course',
+                'category' => 'lunch',
+                'meal_type' => 'lunch',
+                'temperature' => 'hot',
                 'image' => 'asset/img/pasta.jpg',
                 'time' => '30 min',
                 'difficulty' => 'Easy',
@@ -130,7 +142,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Burger',
-                'category' => 'Main Course',
+                'category' => 'lunch',
+                'meal_type' => 'lunch',
+                'temperature' => 'hot',
                 'image' => 'asset/img/burger.jpg',
                 'time' => '20 min',
                 'difficulty' => 'Medium',
@@ -149,7 +163,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Chicken Rice',
-                'category' => 'Main Course',
+                'category' => 'lunch',
+                'meal_type' => 'lunch',
+                'temperature' => 'hot',
                 'image' => 'asset/img/chicken_rice.jpg',
                 'time' => '45 min',
                 'difficulty' => 'Medium',
@@ -169,7 +185,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Lemon Juice',
-                'category' => 'Drink',
+                'category' => 'drink',
+                'meal_type' => 'drink',
+                'temperature' => 'cold',
                 'image' => 'asset/img/lemon_juice.jpg',
                 'time' => '5 min',
                 'difficulty' => 'Easy',
@@ -187,7 +205,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Smoothie',
-                'category' => 'Drink',
+                'category' => 'dinner',
+                'meal_type' => 'dinner',
+                'temperature' => 'hot',
                 'image' => 'asset/img/smoothie.jpg',
                 'time' => '10 min',
                 'difficulty' => 'Easy',
@@ -205,7 +225,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Fruit Salad',
-                'category' => 'Dessert',
+                'category' => 'dinner',
+                'meal_type' => 'dinner',
+                'temperature' => 'cold',
                 'image' => 'asset/img/fruit_salad.jpg',
                 'time' => '10 min',
                 'difficulty' => 'Easy',
@@ -222,7 +244,9 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Cookies',
-                'category' => 'Dessert',
+                'category' => 'snack',
+                'meal_type' => 'snack',
+                'temperature' => 'cold',
                 'image' => 'asset/img/cookies.jpg',
                 'time' => '25 min',
                 'difficulty' => 'Medium',
@@ -240,6 +264,31 @@ class RecipeSeeder extends Seeder
                     "Bake 12-15 min at 180°C"
                 ]),
             ],
+            [
+                'title' => 'Pizza',
+                'category' => 'dinner',
+                'meal_type' => 'lunch',
+                'temperature' => 'cold',
+                'image' => 'asset/img/p3.jpeg',
+                'time' => '25 min',
+                'difficulty' => 'Medium',
+                'calories' => '300',
+                'ingredients' => json_encode([
+                    "1 cup flour",
+                    "1/2 cup cheese",
+                    "1/2 cup butter",
+                    "1 egg",
+                    "meat chips"
+                ]),
+                'steps' => json_encode([
+                    "Mix all ingredients",
+                    "Shape cookies",
+                    "Bake 12-15 min at 180°C"
+                ]),
+            ],
+
+
+
         ];
 
         foreach ($recipes as $recipe) {

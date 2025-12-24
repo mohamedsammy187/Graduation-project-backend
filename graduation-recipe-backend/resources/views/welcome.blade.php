@@ -68,20 +68,29 @@
     <p>
         //register routes
         POST http://127..0.0.1:8000/api/register
-    </p>  
+    </p>
     <p>
         //Logiin routes
         POST http://127..0.0.1:8000/api/login
     </p>
     <p>
-        //logout routes 
+        //logout routes
         POST http://127..0.0.1:8000/api/logout
-    </p>          
+    </p>
     <p>
         //http://127.0.0.1:8000/api/ask then it will create you a link.
         //first ask with { "prompt": "I want something with Grilled Chicken" } ->body in postman.
         //searching by slug "more ingredients".
         GET http://127..0.0.1:8000/api//recipes/slug/{slug}
+    </p>
+    <p>
+        //seach types:
+        POST http://127.0.0.1:8000/api/recipes/search?ingredients=tomato,cheese
+        POST http://127.0.0.1:8000/api/recipes/search?ingredients=tomato,cheese
+        POST http://127.0.0.1:8000/api/recipes/search?ingredients=tomato,cheese&temperature=hot
+        POST http://127.0.0.1:8000/api/recipes/search?ingredients=tomato,cheese&temperature=hot&meal_type=lunch
+        POSThttp://127.0.0.1:8000/api/recipes/search?q=Pancakes
+
     </p>
     </p>
 </body>

@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Recipe;
 use App\Models\ShoppingItem;
 use Illuminate\Http\Request;
 
 class ShoppingListController extends Controller
 {
-   
+
     // GET /shopping-list
     public function index(Request $request)
-    
+
     {
         $user = $request->user();
         return ShoppingItem::where('user_id', $user->id)->get();
@@ -18,7 +19,7 @@ class ShoppingListController extends Controller
 
     // POST /shopping-list
     public function store(Request $request)
-    
+
     {
         $request->validate([
             'item_name' => 'required|string',
@@ -65,5 +66,24 @@ class ShoppingListController extends Controller
             ->delete();
 
         return response()->json(['status' => 'deleted']);
+    }
+    
+    public function migrate(Request $request)
+    {
+        $recipe = Recipe::where('slug', $request->slug)->firstOrFail();
+        $ings = json_decode($recipe->ingredients, true) ?? [];
+        $pantry = $request->input('pantry', []);
+
+        $missing = array_values(array_diff(
+            array_map('strtolower', $ings),
+            array_map('strtolower', $pantry)
+        ));
+
+        // Later: send to e-commerce API
+        return response()->json([
+            'recipe' => $recipe->title,
+            'missing' => $missing,
+            'message' => 'Ready to migrate to shopping service'
+        ]);
     }
 }
