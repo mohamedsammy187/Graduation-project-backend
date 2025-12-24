@@ -92,6 +92,12 @@
         POSThttp://127.0.0.1:8000/api/recipes/search?q=Pancakes
 
     </p>
+    <p>
+        http://127.0.0.1:8000/api/shopping/migrate
+    </p>
+    <p>
+        http://127.0.0.1:8000/api/recipes/match-pantry
+    </p>
     </p>
 </body>
 
