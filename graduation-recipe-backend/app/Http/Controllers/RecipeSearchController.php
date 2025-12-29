@@ -8,51 +8,49 @@ use Illuminate\Http\Request;
 
 class RecipeSearchController extends Controller
 {
-    public function search(Request $request)
-    {
-        $query = Recipe::query()->with('ingredients');
+public function search(Request $request)
+{
+    $q = $request->query('q');
+    $ingredients = $request->query('ingredients');
+    $category = $request->query('category');
+    $mealType = $request->query('meal_type');
+    $temperature = $request->query('temperature');
 
-        // 🔎 Search by title
-        if ($request->filled('q')) {
-            $query->where('title', 'like', '%' . $request->q . '%');
-        }
+    $query = Recipe::query();
 
-        // 🥕 Search by ingredients
-        if ($request->filled('ingredients')) {
-            $ingredients = $request->ingredients;
-
-            if (is_string($ingredients)) {
-                $ingredients = explode(',', $ingredients);
-            }
-
-            $ingredientIds = Ingredient::whereIn('name', $ingredients)->pluck('id');
-
-            $query->whereHas('ingredients', function ($q) use ($ingredientIds) {
-                $q->whereIn('ingredients.id', $ingredientIds);
-            });
-        }
-
-        // 🗂 Category filter (only if column exists)
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-
-        // 🍽 Meal type filter
-        if ($request->filled('meal_type')) {
-            $query->where('meal_type', $request->meal_type);
-        }
-
-        // 🌡 Temperature filter
-        if ($request->filled('temperature')) {
-            $query->where('temperature', $request->temperature);
-        }
-
-        $recipes = $query->get();
-
-        return response()->json([
-            'status' => 'success',
-            'count' => $recipes->count(),
-            'data' => $recipes
-        ]);
+    if ($q) {
+        $query->where('title', 'like', "%$q%");
     }
+
+    if ($category) {
+        $query->where('category', $category);
+    }
+
+    if ($mealType) {
+        $query->where('meal_type', $mealType);
+    }
+
+    if ($temperature) {
+        $query->where('temperature', $temperature);
+    }
+
+    if ($ingredients) {
+        $ings = is_string($ingredients)
+            ? explode(',', $ingredients)
+            : $ingredients;
+
+        $query->whereHas('ingredients', function ($q) use ($ings) {
+            $q->whereIn('name', $ings);
+        });
+    }
+
+    $recipes = $query->with('ingredients')->get();
+
+    return response()->json([
+        'status' => 'success',
+        'count' => $recipes->count(),
+        'data' => $recipes
+    ]);
+}
+
 }
