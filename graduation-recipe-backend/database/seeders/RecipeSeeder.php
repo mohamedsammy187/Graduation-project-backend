@@ -12,7 +12,7 @@ class RecipeSeeder extends Seeder
         $recipes = [
             [
                 'title' => 'Pancakes',
-                'category' => 'breakfast',
+                'category' => 'meal',
                 'meal_type' => 'breakfast',
                 'temperature' => 'cold',
                 'image' => 'asset/img/pancakes.jpg',
@@ -34,7 +34,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Omelette',
-                'category' => 'breakfast',
+                'category' => 'meal',
                 'meal_type' => 'breakfast',
                 'temperature' => 'hot',
                 'image' => 'asset/img/omelette.jpg',
@@ -56,8 +56,8 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'French Toast',
-                'category' => 'breakfast',
-                'meal_type' => 'hot',
+                'category' => 'meal',
+                'meal_type' => 'breakfast',
                 'temperature' => 'cold',
                 'image' => 'asset/img/french_toast.jpg',
                 'time' => '15 min',
@@ -78,7 +78,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Oats',
-                'category' => 'breakfast',
+                'category' => 'meal',
                 'meal_type' => 'breakfast',
                 'temperature' => 'hot',
                 'image' => 'asset/img/oats.jpg',
@@ -98,7 +98,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Grilled Chicken',
-                'category' => 'lunch',
+                'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/grilled_chicken.jpg',
@@ -120,7 +120,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Pasta',
-                'category' => 'lunch',
+                'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/pasta.jpg',
@@ -142,7 +142,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Burger',
-                'category' => 'lunch',
+                'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/burger.jpg',
@@ -163,7 +163,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Chicken Rice',
-                'category' => 'lunch',
+                'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/chicken_rice.jpg',
@@ -186,7 +186,7 @@ class RecipeSeeder extends Seeder
             [
                 'title' => 'Lemon Juice',
                 'category' => 'drink',
-                'meal_type' => 'drink',
+                'meal_type' => 'breakfast',
                 'temperature' => 'cold',
                 'image' => 'asset/img/lemon_juice.jpg',
                 'time' => '5 min',
@@ -205,7 +205,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Smoothie',
-                'category' => 'dinner',
+                'category' => 'drink',
                 'meal_type' => 'dinner',
                 'temperature' => 'hot',
                 'image' => 'asset/img/smoothie.jpg',
@@ -225,7 +225,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Fruit Salad',
-                'category' => 'dinner',
+                'category' => 'meal',
                 'meal_type' => 'dinner',
                 'temperature' => 'cold',
                 'image' => 'asset/img/fruit_salad.jpg',
@@ -245,7 +245,7 @@ class RecipeSeeder extends Seeder
             [
                 'title' => 'Cookies',
                 'category' => 'snack',
-                'meal_type' => 'snack',
+                'meal_type' => 'dinner',
                 'temperature' => 'cold',
                 'image' => 'asset/img/cookies.jpg',
                 'time' => '25 min',
@@ -266,7 +266,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'title' => 'Pizza',
-                'category' => 'dinner',
+                'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'cold',
                 'image' => 'asset/img/p3.jpeg',
