@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Recipe;
 use App\Models\ShoppingItem;
 use Illuminate\Http\Request;
+use App\Models\PantryItem;
 
 class ShoppingListController extends Controller
 {
@@ -67,19 +68,29 @@ class ShoppingListController extends Controller
 
         return response()->json(['status' => 'deleted']);
     }
-    
     public function migrate(Request $request)
     {
-        $recipe = Recipe::where('slug', $request->slug)->firstOrFail();
+        $request->validate([
+            'slug' => 'required',
+            'pantry' => 'array'
+        ]);
+
+        $recipe = Recipe::where('slug', 'LIKE', $request->slug . '%')->first();
+
+        if (!$recipe) {
+            return response()->json(['message' => 'Recipe not found'], 404);
+        }
+
         $ings = json_decode($recipe->ingredients, true) ?? [];
-        $pantry = $request->input('pantry', []);
+        $pantry = array_map('strtolower', $request->pantry);
 
         $missing = array_values(array_diff(
-            array_map('strtolower', $ings),
-            array_map('strtolower', $pantry)
+            array_map(function ($i) {
+                return strtolower(preg_replace('/[^a-z ]/', '', $i));
+            }, $ings),
+            $pantry
         ));
 
-        // Later: send to e-commerce API
         return response()->json([
             'recipe' => $recipe->title,
             'missing' => $missing,

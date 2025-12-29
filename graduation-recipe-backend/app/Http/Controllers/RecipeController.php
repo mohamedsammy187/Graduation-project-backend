@@ -16,9 +16,12 @@ class RecipeController extends Controller
     public function index()
     {
         return response()->json([
-            'data' => Recipe::select('id', 'title', 'image', 'time', 'difficulty', 'calories', 'ingredients', 'slug')->get()
+            'data' => Recipe::select('id', 'title','catregory','meal_type','temperature', 'image', 'time', 'difficulty', 'calories', 'ingredients', 'slug',)->get()
         ]);
     }
+
+
+
 
     public function show($id)
     {
@@ -39,29 +42,54 @@ class RecipeController extends Controller
         $recipe = Recipe::create($request->all());
         return response()->json($recipe, 201);
     }
-    public function matchPantry(Request $request)
-    {
-        $pantry = $request->input('ingredients', []);
-        $recipes = Recipe::all();
 
-        $results = [];
 
-        foreach ($recipes as $recipe) {
-            $ings = json_decode($recipe->ingredients, true) ?? [];
-            $matches = array_intersect(
-                array_map('strtolower', $ings),
-                array_map('strtolower', $pantry)
-            );
 
+
+    
+public function matchPantry(Request $request)
+{
+    $pantry = array_map('strtolower', $request->input('ingredients', []));
+    $allowMissingOne = $request->boolean('allow_missing_one', false);
+
+    $recipes = Recipe::all();
+    $results = [];
+
+    foreach ($recipes as $recipe) {
+
+        $ingsRaw = json_decode($recipe->ingredients, true);
+        if (!is_array($ingsRaw)) continue;
+
+        // تنظيف المكونات
+        $recipeIngs = array_map(function ($ing) {
+            $ing = strtolower($ing);
+            $ing = preg_replace('/[^a-z ]/', '', $ing);
+            return trim($ing);
+        }, $ingsRaw);
+
+        $recipeIngs = array_filter($recipeIngs);
+
+        $matched = array_intersect($recipeIngs, $pantry);
+        $missing = array_diff($recipeIngs, $pantry);
+
+        $missingCount = count($missing);
+
+        // 🔥 الفلترة الصح
+        if ($missingCount === 0 || ($allowMissingOne && $missingCount === 1)) {
             $results[] = [
                 'recipe' => $recipe,
-                'match_count' => count($matches),
-                'matched' => array_values($matches),
+                'matched' => array_values($matched),
+                'missing' => array_values($missing),
+                'missing_count' => $missingCount
             ];
         }
-
-        usort($results, fn($a, $b) => $b['match_count'] <=> $a['match_count']);
-
-        return response()->json($results);
     }
+
+    return response()->json([
+        'status' => 'success',
+        'count' => count($results),
+        'data' => $results
+    ]);
+}
+
 }
