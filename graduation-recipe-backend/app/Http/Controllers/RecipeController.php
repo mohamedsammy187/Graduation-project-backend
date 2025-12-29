@@ -16,7 +16,7 @@ class RecipeController extends Controller
     public function index()
     {
         return response()->json([
-            'data' => Recipe::select('id', 'title', 'catregory', 'meal_type', 'temperature', 'image', 'time', 'difficulty', 'calories', 'ingredients', 'slug',)->get()
+            'data' => Recipe::select('id', 'title', 'category', 'meal_type', 'temperature', 'image', 'time', 'difficulty', 'calories' , 'slug',)->get()
         ]);
     }
 
