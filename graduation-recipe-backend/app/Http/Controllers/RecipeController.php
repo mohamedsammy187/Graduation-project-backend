@@ -16,7 +16,7 @@ class RecipeController extends Controller
     public function index()
     {
         return response()->json([
-            'data' => Recipe::select('id', 'title','catregory','meal_type','temperature', 'image', 'time', 'difficulty', 'calories', 'ingredients', 'slug',)->get()
+            'data' => Recipe::select('id', 'title', 'catregory', 'meal_type', 'temperature', 'image', 'time', 'difficulty', 'calories', 'ingredients', 'slug',)->get()
         ]);
     }
 
@@ -44,51 +44,74 @@ class RecipeController extends Controller
     }
 
 
-
-
-    
 public function matchPantry(Request $request)
 {
-    $pantry = array_map('strtolower', $request->input('ingredients', []));
+    $request->validate([
+        'ingredients' => 'required|array|min:1',
+        'allow_missing_one' => 'boolean'
+    ]);
+
     $allowMissingOne = $request->boolean('allow_missing_one', false);
 
-    $recipes = Recipe::all();
-    $results = [];
+    // Pantry ingredients → lowercase & trimmed
+    $pantry = collect($request->ingredients)
+        ->map(fn ($i) => strtolower(trim($i)));
 
-    foreach ($recipes as $recipe) {
+    // Get recipes with ingredients relation
+    $recipes = Recipe::with('ingredients')->get();
 
-        $ingsRaw = json_decode($recipe->ingredients, true);
-        if (!is_array($ingsRaw)) continue;
+    $matchedRecipes = $recipes
+        ->map(function ($recipe) use ($pantry) {
 
-        // تنظيف المكونات
-        $recipeIngs = array_map(function ($ing) {
-            $ing = strtolower($ing);
-            $ing = preg_replace('/[^a-z ]/', '', $ing);
-            return trim($ing);
-        }, $ingsRaw);
+            $recipeIngredients = $recipe->ingredients
+                ->map(fn ($i) => strtolower($i->name));
 
-        $recipeIngs = array_filter($recipeIngs);
+            $matched = $recipeIngredients->intersect($pantry);
+            $missing = $recipeIngredients->diff($pantry);
 
-        $matched = array_intersect($recipeIngs, $pantry);
-        $missing = array_diff($recipeIngs, $pantry);
+            return [
+                'id' => $recipe->id,
+                'title' => $recipe->title,
+                'slug' => $recipe->slug,
+                'image' => $recipe->image,
 
-        $missingCount = count($missing);
+                // 👇 IMPORTANT
+                'match_count' => $matched->count(),
+                'matched_ingredients' => $matched->values(),
 
-        // 🔥 الفلترة الصح
-        if ($missingCount === 0 || ($allowMissingOne && $missingCount === 1)) {
-            $results[] = [
-                'recipe' => $recipe,
-                'matched' => array_values($matched),
-                'missing' => array_values($missing),
-                'missing_count' => $missingCount
+                'missing_count' => $missing->count(),
+                'missing_ingredients' => $missing->values(),
             ];
-        }
-    }
+        })
+
+        // ✅ FILTER FIRST (logic)
+        ->filter(function ($recipe) use ($allowMissingOne) {
+
+            // ❌ No matched ingredients → reject
+            if ($recipe['match_count'] === 0) {
+                return false;
+            }
+
+            // ✅ Fully match
+            if ($recipe['missing_count'] === 0) {
+                return true;
+            }
+
+            // ✅ Allow missing one (optional)
+            return $allowMissingOne && $recipe['missing_count'] === 1;
+        })
+
+        // ✅ THEN SORT
+        ->sortBy([
+            ['missing_count', 'asc'],
+            ['match_count', 'desc'],
+        ])
+        ->values();
 
     return response()->json([
         'status' => 'success',
-        'count' => count($results),
-        'data' => $results
+        'count' => $matchedRecipes->count(),
+        'data' => $matchedRecipes
     ]);
 }
 

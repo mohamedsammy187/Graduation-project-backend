@@ -13,18 +13,18 @@ class Recipe extends Model
 {
     protected $fillable = [
         'title',
-        'category',
+        'slug',
         'image',
+        'category',
+        'meal_type',
+        'temperature',
         'time',
         'difficulty',
-        'calories',
-        'ingredients',
-        'steps',
+        'calories'
     ];
-
     public function ingredients()
     {
-        return $this->belongsToMany(Ingredient::class , 'ingredient_recipe');
+        return $this->belongsToMany(Ingredient::class, 'ingredient_recipe');
     }
 
     public function ask(Request $request)
@@ -82,6 +82,6 @@ class Recipe extends Model
 
     public function getRouteKeyName()
     {
-        return'slug';
+        return 'slug';
     }
 }
