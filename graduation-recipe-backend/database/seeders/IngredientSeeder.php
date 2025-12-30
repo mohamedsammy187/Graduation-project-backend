@@ -3,25 +3,35 @@
 namespace Database\Seeders;
 
 use App\Models\Ingredient;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class IngredientSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-            $ingredients = [
+        $ingredients = [
+            // Vegetables
             "Tomato", "Onion", "Garlic", "Potato", "Carrot", "Cucumber", "Lettuce",
-            "Chicken Breast", "Beef", "Egg", "Salmon", "Tuna",
-            "Rice", "Pasta", "Bread", "Flour", "Sugar", "Salt", "Pepper",
+
+            // Proteins
+            "Chicken Breast", "Beef", "Egg",
+            "Fish", "Shrimp", "Salmon", "Tuna",
+
+            // Carbs
+            "Rice", "Pasta", "Bread", "Bun", "Flour",
+
+            // Dairy
             "Milk", "Cheese", "Butter", "Yogurt", "Cream",
-            "Olive Oil", "Lemon", "Basil", "Parsley", "Chili Flakes","Water"
+
+            // Others
+            "Salt", "Pepper", "Sugar", "Olive Oil", "Lemon",
+            "Parsley", "Basil", "Spices", "Sauce", "Oil", "Water"
         ];
-        foreach ($ingredients as $name){
-            Ingredient::firstOrCreate(['name' => $name]);
+
+        foreach ($ingredients as $name) {
+            Ingredient::firstOrCreate([
+                'name' => strtolower($name) // مهم للماتشينج
+            ]);
         }
     }
 }
