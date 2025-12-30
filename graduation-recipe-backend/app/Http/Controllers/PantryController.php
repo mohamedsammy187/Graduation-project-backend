@@ -27,7 +27,7 @@ class PantryController extends Controller
 
         $item = PantryItem::create([
             'user_id' => $user->id,
-            'item_name' => $request->item_name,
+            'item_name' => strtolower($request->item_name),
             'ingredient_id' => $request->ingredient_id
         ]);
 

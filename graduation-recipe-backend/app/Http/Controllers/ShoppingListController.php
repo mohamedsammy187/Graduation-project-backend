@@ -68,31 +68,42 @@ class ShoppingListController extends Controller
 
         return response()->json(['status' => 'deleted']);
     }
+    
     public function migrate(Request $request)
     {
         $request->validate([
-            'slug' => 'required',
-            'pantry' => 'array'
+            'slug' => 'required|string',
+            'pantry' => 'required|array'
         ]);
 
-        $recipe = Recipe::where('slug', 'LIKE', $request->slug . '%')->first();
+        $recipe = Recipe::with('ingredients')
+            ->where('slug', 'LIKE', $request->slug . '%')
+            ->first();
 
         if (!$recipe) {
             return response()->json(['message' => 'Recipe not found'], 404);
         }
 
-        $ings = json_decode($recipe->ingredients, true) ?? [];
-        $pantry = array_map('strtolower', $request->pantry);
+        // pantry → lowercase
+        $pantry = collect($request->pantry)
+            ->map(fn($i) => strtolower(trim($i)));
 
-        $missing = array_values(array_diff(
-            array_map(function ($i) {
-                return strtolower(preg_replace('/[^a-z ]/', '', $i));
-            }, $ings),
-            $pantry
-        ));
+        // recipe ingredients from relation
+        $recipeIngredients = $recipe->ingredients
+            ->map(fn($i) => strtolower($i->name));
+
+        // missing ingredients
+        $missing = $recipeIngredients
+            ->diff($pantry)
+            ->values();
 
         return response()->json([
-            'recipe' => $recipe->title,
+            'status' => 'success',
+            'recipe' => [
+                'id' => $recipe->id,
+                'title' => $recipe->title,
+                'slug' => $recipe->slug,
+            ],
             'missing' => $missing,
             'message' => 'Ready to migrate to shopping service'
         ]);

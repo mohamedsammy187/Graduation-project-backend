@@ -12,7 +12,7 @@ class FavoriteController extends Controller
     // GET /favorites
     public function index(Request $request)
     {
-        return Favorite::with('recipe')
+        return Favorite::with('recipe.ingredients')
             ->where('user_id', $request->user()->id)
             ->get();
     }

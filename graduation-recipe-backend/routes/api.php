@@ -12,6 +12,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ShoppingListController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LLMController;
+use App\Http\Controllers\FavoriteController;
 use Illuminate\Http\Request;
 
 // Route::get('/test', function () {
@@ -23,8 +24,6 @@ use Illuminate\Http\Request;
 
 // Recipe Routes***( 1 .first sprint)***
 Route::get('/test', [RecipeController::class, 'test']);
-Route::get('/recipes', [RecipeController::class, 'index']);
-
 //search
 Route::match(['get', 'post'], '/recipes/search', [RecipeSearchController::class, 'search']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
@@ -55,9 +54,9 @@ Route::post('/login', [AuthController::class, 'login']);
     Route::delete('/pantry/{id}', [PantryController::class, 'destroy']);
 
     //favorite routes
-    Route::get('/favorites', [App\Http\Controllers\FavoriteController::class, 'index']);
-    Route::post('/favorites', [App\Http\Controllers\FavoriteController::class, 'store']);
-    Route::delete('/favorites/{recipe_id}', [App\Http\Controllers\FavoriteController::class, 'destroy']);
+    Route::get('/favorites', [FavoriteController::class, 'index']);
+    Route::post('/favorites', [FavoriteController::class, 'store']);
+    Route::delete('/favorites/{recipe_id}', [FavoriteController::class, 'destroy']);
 
     //shopping list routes
     Route::get('/shopping-list', [ShoppingListController::class, 'index']);

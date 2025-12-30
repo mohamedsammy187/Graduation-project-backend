@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Recipe;
 use App\Models\Ingredient;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
 class RecipeSearchController extends Controller
 {
 public function search(Request $request)
@@ -40,7 +40,8 @@ public function search(Request $request)
             : $ingredients;
 
         $query->whereHas('ingredients', function ($q) use ($ings) {
-            $q->whereIn('name', $ings);
+            $q->whereIn(DB::raw('LOWER(name)'), array_map('strtolower',$ings));
+
         });
     }
 

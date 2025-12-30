@@ -13,24 +13,49 @@ class RecipeController extends Controller
         return response()->json(['message' => 'API is working']);
     }
 
+
+
     public function index()
     {
+        $recipes = Recipe::with('ingredients')->get();
+
         return response()->json([
-            'data' => Recipe::select('id', 'title', 'category', 'meal_type', 'temperature', 'image', 'time', 'difficulty', 'calories' , 'slug',)->get()
+            'data' => $recipes->map(function ($recipe) {
+                return [
+                    'id' => $recipe->id,
+                    'title' => $recipe->title,
+                    'image' => $recipe->image,
+                    'ingredients' => $recipe->ingredients->pluck('name'),
+                ];
+            })
+        ]);
+    }
+
+
+    public function show($id)
+    {
+        $recipe = Recipe::with('ingredients')->findOrFail($id);
+
+        return response()->json([
+            'id' => $recipe->id,
+            'title' => $recipe->title,
+            'slug' => $recipe->slug,
+            'image' => $recipe->image,
+            'ingredients' => $recipe->ingredients->map(fn($i) => [
+                'id' => $i->id,
+                'name' => $i->name,
+            ]),
+            'steps' => json_decode($recipe->steps, true),
         ]);
     }
 
 
 
 
-    public function show($id)
-    {
-        $recipe = Recipe::findOrFail($id);
-        return response()->json($recipe);
-    }
     public function showrecipe($slug)
     {
-        $recipe = Recipe::where('slug', $slug)->first();
+        $recipe = Recipe::with('ingredients')->where('slug',$slug)->first();
+
         if (!$recipe) {
             return response()->json(['message' => 'Recipe not found'], 404);
         }
@@ -44,75 +69,74 @@ class RecipeController extends Controller
     }
 
 
-public function matchPantry(Request $request)
-{
-    $request->validate([
-        'ingredients' => 'required|array|min:1',
-        'allow_missing_one' => 'boolean'
-    ]);
+    public function matchPantry(Request $request)
+    {
+        $request->validate([
+            'ingredients' => 'required|array|min:1',
+            'allow_missing_one' => 'boolean'
+        ]);
 
-    $allowMissingOne = $request->boolean('allow_missing_one', false);
+        $allowMissingOne = $request->boolean('allow_missing_one', false);
 
-    // Pantry ingredients → lowercase & trimmed
-    $pantry = collect($request->ingredients)
-        ->map(fn ($i) => strtolower(trim($i)));
+        // Pantry ingredients → lowercase & trimmed
+        $pantry = collect($request->ingredients)
+            ->map(fn($i) => strtolower(trim($i)));
 
-    // Get recipes with ingredients relation
-    $recipes = Recipe::with('ingredients')->get();
+        // Get recipes with ingredients relation
+        $recipes = Recipe::with('ingredients')->get();
 
-    $matchedRecipes = $recipes
-        ->map(function ($recipe) use ($pantry) {
+        $matchedRecipes = $recipes
+            ->map(function ($recipe) use ($pantry) {
 
-            $recipeIngredients = $recipe->ingredients
-                ->map(fn ($i) => strtolower($i->name));
+                $recipeIngredients = $recipe->ingredients
+                    ->map(fn($i) => strtolower($i->name));
 
-            $matched = $recipeIngredients->intersect($pantry);
-            $missing = $recipeIngredients->diff($pantry);
+                $matched = $recipeIngredients->intersect($pantry);
+                $missing = $recipeIngredients->diff($pantry);
 
-            return [
-                'id' => $recipe->id,
-                'title' => $recipe->title,
-                'slug' => $recipe->slug,
-                'image' => $recipe->image,
+                return [
+                    'id' => $recipe->id,
+                    'title' => $recipe->title,
+                    'slug' => $recipe->slug,
+                    'image' => $recipe->image,
 
-                // 👇 IMPORTANT
-                'match_count' => $matched->count(),
-                'matched_ingredients' => $matched->values(),
+                    // 👇 IMPORTANT
+                    'match_count' => $matched->count(),
+                    'matched_ingredients' => $matched->values(),
 
-                'missing_count' => $missing->count(),
-                'missing_ingredients' => $missing->values(),
-            ];
-        })
+                    'missing_count' => $missing->count(),
+                    'missing_ingredients' => $missing->values(),
+                ];
+            })
 
-        // ✅ FILTER FIRST (logic)
-        ->filter(function ($recipe) use ($allowMissingOne) {
+            // ✅ FILTER FIRST (logic)
+            ->filter(function ($recipe) use ($allowMissingOne) {
 
-            // ❌ No matched ingredients → reject
-            if ($recipe['match_count'] === 0) {
-                return false;
-            }
+                // ❌ No matched ingredients → reject
+                if ($recipe['match_count'] === 0) {
+                    return false;
+                }
 
-            // ✅ Fully match
-            if ($recipe['missing_count'] === 0) {
-                return true;
-            }
+                // ✅ Fully match
+                if ($recipe['missing_count'] === 0) {
+                    return true;
+                }
 
-            // ✅ Allow missing one (optional)
-            return $allowMissingOne && $recipe['missing_count'] === 1;
-        })
+                // ✅ Allow missing one (optional)
+                return $allowMissingOne && $recipe['missing_count'] === 1;
+            })
 
-        // ✅ THEN SORT
-        ->sortBy([
-            ['missing_count', 'asc'],
-            ['match_count', 'desc'],
-        ])
-        ->values();
+            // ✅ THEN SORT
+            ->sortBy([
+                ['missing_count', 'asc'],
+                ['match_count', 'desc'],
+            ])
+            ->values();
 
-    return response()->json([
-        'status' => 'success',
-        'count' => $matchedRecipes->count(),
-        'data' => $matchedRecipes
-    ]);
-}
-
+        return response()->json([
+            'status' => 'success',
+            'count' => $matchedRecipes->count(),
+            'data' => $matchedRecipes
+        ]);
+    }
 }
