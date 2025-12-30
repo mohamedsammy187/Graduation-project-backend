@@ -18,7 +18,7 @@ class IngredientSeeder extends Seeder
             "Chicken Breast", "Beef", "Egg", "Salmon", "Tuna",
             "Rice", "Pasta", "Bread", "Flour", "Sugar", "Salt", "Pepper",
             "Milk", "Cheese", "Butter", "Yogurt", "Cream",
-            "Olive Oil", "Lemon", "Basil", "Parsley", "Chili Flakes"
+            "Olive Oil", "Lemon", "Basil", "Parsley", "Chili Flakes","Water"
         ];
         foreach ($ingredients as $name){
             Ingredient::firstOrCreate(['name' => $name]);

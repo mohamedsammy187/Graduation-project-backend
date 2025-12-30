@@ -47,7 +47,7 @@ Route::post('/ask', [LLMController::class, 'ask']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     //pantry routes
     Route::get('/pantry', [PantryController::class, 'index']);
     Route::post('/pantry', [PantryController::class, 'store']);
@@ -70,7 +70,7 @@ Route::post('/login', [AuthController::class, 'login']);
     Route::get('/me', function (Request $request) {
         return response()->json(['user' => $request->user()]);
     });
-// });
+});
 
 
 
