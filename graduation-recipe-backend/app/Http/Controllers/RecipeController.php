@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ingredient;
 use App\Models\Recipe;
 use Illuminate\Http\Request;
+use App\Models\PantryItem;
 
 class RecipeController extends Controller
 {
@@ -80,40 +81,43 @@ class RecipeController extends Controller
     }
 
 
+
+    
+
     public function matchPantry(Request $request)
     {
-        // 🧠 support GET & POST
-        $ingredientsInput = $request->input('ingredients');
+        $user = $request->user();
 
-        // GET: ingredients=egg,milk
-        if (is_string($ingredientsInput)) {
-            $ingredientsInput = explode(',', $ingredientsInput);
-        }
-
-        $request->merge([
-            'ingredients' => $ingredientsInput
-        ]);
-
-        // ✅ validation
-        $request->validate([
-            'ingredients' => 'required|array|min:1',
-            'allow_missing_one' => 'boolean'
-        ]);
-
-        $allowMissingOne = $request->boolean('allow_missing_one', false);
-
-        // 🧺 pantry normalize
-        $pantry = collect($request->ingredients)
+        // 🧺 1. Get pantry from DB
+        $pantry = PantryItem::where('user_id', $user->id)
+            ->pluck('item_name')
             ->map(fn($i) => strtolower(trim($i)));
 
-        // 🍽 load recipes
+        if ($pantry->isEmpty()) {
+            return response()->json([
+                'status' => 'success',
+                'count' => 0,
+                'data' => [],
+                'message' => 'Pantry is empty'
+            ]);
+        }
+
+        // 🔧 optional flag from query
+        // /recipes/match-pantry?allow_missing_one=true
+        $allowMissingOne = filter_var(
+            $request->query('allow_missing_one', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        // 🍽 2. Load recipes
         $recipes = Recipe::with('ingredients')->get();
 
         $matchedRecipes = $recipes
             ->map(function ($recipe) use ($pantry) {
 
                 $recipeIngredients = $recipe->ingredients
-                    ->map(fn($i) => strtolower($i->name));
+                    ->pluck('name')
+                    ->map(fn($i) => strtolower($i));
 
                 $matched = $recipeIngredients->intersect($pantry);
                 $missing = $recipeIngredients->diff($pantry);
@@ -136,7 +140,7 @@ class RecipeController extends Controller
                 ];
             })
 
-            // ✅ filter logic
+            // 🧠 3. Filter logic
             ->filter(function ($recipe) use ($allowMissingOne) {
 
                 if ($recipe['match_count'] === 0) {
@@ -150,7 +154,7 @@ class RecipeController extends Controller
                 return $allowMissingOne && $recipe['missing_count'] === 1;
             })
 
-            // ✅ sort
+            // 📊 4. Sort
             ->sortBy([
                 ['missing_count', 'asc'],
                 ['match_count', 'desc'],
