@@ -34,8 +34,6 @@ Route::get('/recipes/slug/{slug}', [RecipeController::class, 'showrecipe']);
 Route::post('/recipes', [RecipeController::class, 'store']);
 //match-pantry
 Route::match(['get', 'post'], '/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
-
-// Route::post('/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
 //shopping  
 Route::post('/shopping/migrate', [ShoppingListController::class, 'migrate']);
 

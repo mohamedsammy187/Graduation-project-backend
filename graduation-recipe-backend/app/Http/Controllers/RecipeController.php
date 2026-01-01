@@ -82,6 +82,19 @@ class RecipeController extends Controller
 
     public function matchPantry(Request $request)
     {
+        // 🧠 support GET & POST
+        $ingredientsInput = $request->input('ingredients');
+
+        // GET: ingredients=egg,milk
+        if (is_string($ingredientsInput)) {
+            $ingredientsInput = explode(',', $ingredientsInput);
+        }
+
+        $request->merge([
+            'ingredients' => $ingredientsInput
+        ]);
+
+        // ✅ validation
         $request->validate([
             'ingredients' => 'required|array|min:1',
             'allow_missing_one' => 'boolean'
@@ -89,11 +102,11 @@ class RecipeController extends Controller
 
         $allowMissingOne = $request->boolean('allow_missing_one', false);
 
-        // Pantry ingredients → lowercase & trimmed
+        // 🧺 pantry normalize
         $pantry = collect($request->ingredients)
             ->map(fn($i) => strtolower(trim($i)));
 
-        // Get recipes with ingredients relation
+        // 🍽 load recipes
         $recipes = Recipe::with('ingredients')->get();
 
         $matchedRecipes = $recipes
@@ -110,8 +123,11 @@ class RecipeController extends Controller
                     'title' => $recipe->title,
                     'slug' => $recipe->slug,
                     'image' => $recipe->image,
+                    'difficulty' => $recipe->difficulty,
+                    'time' => $recipe->time,
+                    'calories' => $recipe->calories,
+                    'steps' => json_decode($recipe->steps, true),
 
-                    // 👇 IMPORTANT
                     'match_count' => $matched->count(),
                     'matched_ingredients' => $matched->values(),
 
@@ -120,24 +136,21 @@ class RecipeController extends Controller
                 ];
             })
 
-            // ✅ FILTER FIRST (logic)
+            // ✅ filter logic
             ->filter(function ($recipe) use ($allowMissingOne) {
 
-                // ❌ No matched ingredients → reject
                 if ($recipe['match_count'] === 0) {
                     return false;
                 }
 
-                // ✅ Fully match
                 if ($recipe['missing_count'] === 0) {
                     return true;
                 }
 
-                // ✅ Allow missing one (optional)
                 return $allowMissingOne && $recipe['missing_count'] === 1;
             })
 
-            // ✅ THEN SORT
+            // ✅ sort
             ->sortBy([
                 ['missing_count', 'asc'],
                 ['match_count', 'desc'],
