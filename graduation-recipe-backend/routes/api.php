@@ -29,7 +29,7 @@ Route::match(['get', 'post'], '/recipes/search', [RecipeSearchController::class,
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
 Route::get('/recipes', [RecipeController::class, 'index']);
-Route::get('/recipes/{id}', [RecipeController::class, 'show'])->where('id','[0-9]');
+Route::get('/recipes/{id}', [RecipeController::class, 'show'])->whereNumber('id');
 Route::get('/recipes/slug/{slug}', [RecipeController::class, 'showrecipe']);
 Route::post('/recipes', [RecipeController::class, 'store']);
 //match-pantry

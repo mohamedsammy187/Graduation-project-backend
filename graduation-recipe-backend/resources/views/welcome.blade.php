@@ -90,10 +90,10 @@
         http://127.0.0.1:8000/api/recipes/match-pantry
     </p>
     <p>
-    POST    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette
-    POST    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt
-    POST    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal
-    POST    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal&meal_type=breakfast&temperature=hot
+    POST or GET   http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette
+    POST or GET   http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt
+    POST or GET    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal
+    POST or GET    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal&meal_type=breakfast&temperature=hot
 
     </p>
     </p>
