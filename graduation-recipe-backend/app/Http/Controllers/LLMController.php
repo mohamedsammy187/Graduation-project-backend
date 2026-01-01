@@ -16,19 +16,20 @@ class LLMController extends Controller
             $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
 
             // 1. Get recipes from DB
-            $recipes = Recipe::all();
+            $recipes = Recipe::with('ingredients')->get();
 
-            // 2. Build recipes context
             $recipesText = "";
+
             foreach ($recipes as $recipe) {
 
-                $ingredientsArr = json_decode($recipe->ingredients, true) ?? [];
+                // ✅ from relationship
+                $ingredientsArr = $recipe->ingredients->pluck('name')->toArray();
+
                 $stepsArr = json_decode($recipe->steps, true) ?? [];
 
                 $ingredients = implode(', ', $ingredientsArr);
                 $steps = implode(' | ', $stepsArr);
 
-                // ✅ build link per recipe
                 $link = url("/api/recipes/slug/{$recipe->slug}");
 
                 $recipesText .= "Link: {$link}\n";
@@ -36,6 +37,7 @@ class LLMController extends Controller
                 $recipesText .= "Ingredients: {$ingredients}\n";
                 $recipesText .= "Steps: {$steps}\n\n";
             }
+
 
             // 3. Build final prompt
             $userQuestion = $request->input('prompt');

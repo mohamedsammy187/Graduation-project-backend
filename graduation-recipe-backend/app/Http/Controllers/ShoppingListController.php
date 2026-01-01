@@ -69,6 +69,7 @@ class ShoppingListController extends Controller
         return response()->json(['status' => 'deleted']);
     }
     
+    
     public function migrate(Request $request)
     {
         $request->validate([
