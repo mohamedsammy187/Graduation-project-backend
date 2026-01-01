@@ -32,10 +32,6 @@ Route::get('/recipes', [RecipeController::class, 'index']);
 Route::get('/recipes/{id}', [RecipeController::class, 'show'])->whereNumber('id');
 Route::get('/recipes/slug/{slug}', [RecipeController::class, 'showrecipe']);
 Route::post('/recipes', [RecipeController::class, 'store']);
-//match-pantry
-Route::match(['get', 'post'], '/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
-//shopping  
-Route::post('/shopping/migrate', [ShoppingListController::class, 'migrate']);
 
 //simple chat route 
 Route::post('/chat', [ChatController::class, 'handle']);
@@ -63,6 +59,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/shopping-list', [ShoppingListController::class, 'store']);
     Route::patch('/shopping-list/{id}', [ShoppingListController::class, 'toggle']);
     Route::delete('/shopping-list/{id}', [ShoppingListController::class, 'destroy']);
+
+    //match-pantry
+    Route::match(['get', 'post'], '/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
+    //shopping  
+    Route::post('/shopping/migrate', [ShoppingListController::class, 'migrate']);
+
 
     //logout route
     Route::post('/logout', [AuthController::class, 'logout']);

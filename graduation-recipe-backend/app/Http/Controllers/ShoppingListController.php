@@ -43,6 +43,41 @@ class ShoppingListController extends Controller
         ]);
     }
 
+    private function addToPantryAndMatch($user, $itemName)
+    {
+        // ✅ Add to pantry if not exists
+        PantryItem::firstOrCreate([
+            'user_id' => $user->id,
+            'item_name' => strtolower(trim($itemName))
+        ]);
+
+        // 🧠 Get pantry names
+        $pantry = PantryItem::where('user_id', $user->id)
+            ->pluck('item_name');
+
+        // 🔥 Matching Engine (نفس اللي كتبته قبل كده)
+        return Recipe::with('ingredients')->get()
+            ->map(function ($recipe) use ($pantry) {
+
+                $ingredients = $recipe->ingredients
+                    ->map(fn($i) => strtolower($i->name));
+
+                $matched = $ingredients->intersect($pantry);
+                $missing = $ingredients->diff($pantry);
+
+                return [
+                    'id' => $recipe->id,
+                    'title' => $recipe->title,
+                    'slug' => $recipe->slug,
+                    'missing_count' => $missing->count(),
+                    'missing_ingredients' => $missing->values(),
+                ];
+            })
+            ->filter(fn($r) => $r['missing_count'] === 0)
+            ->values();
+    }
+
+
     // PATCH /shopping-list/{id}
     public function toggle(Request $request, $id)
     {
@@ -55,8 +90,19 @@ class ShoppingListController extends Controller
             'is_checked' => $request->is_checked
         ]);
 
-        return response()->json(['status' => 'updated']);
+        $recipes = [];
+
+        //true if check
+        if ($request->is_checked) {
+            $recipes = $this->addToPantryAndMatch($user, $item->item_name);
+        }
+
+        return response()->json([
+            'status' => 'updated',
+            'ready_recipes' => $recipes
+        ]);
     }
+
 
     // DELETE /shopping-list/{id}
     public function destroy(Request $request, $id)
@@ -68,8 +114,9 @@ class ShoppingListController extends Controller
 
         return response()->json(['status' => 'deleted']);
     }
-    
-    
+
+
+
     public function migrate(Request $request)
     {
         $request->validate([
