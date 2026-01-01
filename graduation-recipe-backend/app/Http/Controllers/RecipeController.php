@@ -24,8 +24,16 @@ class RecipeController extends Controller
                 return [
                     'id' => $recipe->id,
                     'title' => $recipe->title,
+                    'slug' => $recipe->slug,
+                    'time' => $recipe->time,
+                    'difficulty' => $recipe->difficulty,
+                    'calories' => $recipe->calories,
                     'image' => $recipe->image,
-                    'ingredients' => $recipe->ingredients->pluck('name'),
+                    'ingredients' => $recipe->ingredients->map(fn($i) => [
+                        'id' => $i->id,
+                        'name' => $i->name,
+                    ]),
+                    'steps' => json_decode($recipe->steps, true),
                 ];
             })
         ]);
@@ -57,7 +65,7 @@ class RecipeController extends Controller
 
     public function showrecipe($slug)
     {
-        $recipe = Recipe::with('ingredients')->where('slug',$slug)->first();
+        $recipe = Recipe::with('ingredients')->where('slug', $slug)->first();
 
         if (!$recipe) {
             return response()->json(['message' => 'Recipe not found'], 404);
