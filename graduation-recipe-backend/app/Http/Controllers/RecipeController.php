@@ -40,6 +40,9 @@ class RecipeController extends Controller
             'id' => $recipe->id,
             'title' => $recipe->title,
             'slug' => $recipe->slug,
+            'time' => $recipe->time,
+            'difficulty' => $recipe->difficulty,
+            'calories' => $recipe->calories,
             'image' => $recipe->image,
             'ingredients' => $recipe->ingredients->map(fn($i) => [
                 'id' => $i->id,
