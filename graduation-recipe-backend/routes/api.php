@@ -61,7 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/shopping-list/{id}', [ShoppingListController::class, 'destroy']);
     
     //match-pantry
-    Route::get('/recipes/match-pantry', [RecipeController::class, 'm    atchPantry']);
+    Route::get('/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
     // Route::match(['get', 'post'], '/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
     //shopping  
     Route::post('/shopping/migrate', [ShoppingListController::class, 'migrate']);
