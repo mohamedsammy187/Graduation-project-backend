@@ -177,7 +177,7 @@ class RecipeController extends Controller
         $user = $request->user();
 
         // 1️⃣ Get pantry from shopping_items
-        $pantry = ShoppingItem::where('user_id', $user->id)
+        $pantry = PantryItem::where('user_id', $user->id)
             ->pluck('item_name')
             ->map(fn($i) => strtolower(trim($i)));
 
@@ -244,11 +244,16 @@ class RecipeController extends Controller
                 'time' => $recipe->time,
                 'difficulty' => $recipe->difficulty,
                 'calories' => $recipe->calories,
+
                 'ingredients' => $recipe->ingredients->map(fn($i) => [
                     'id' => $i->id,
                     'name' => $i->name
                 ]),
+
                 'missing_ingredients' => $selected['missing']->values(),
+
+                // ✅ deployment-safe link
+                'link' => rtrim(config('app.url'), '/') . "/api/recipes/slug/{$recipe->slug}",
             ]
         ]);
     }

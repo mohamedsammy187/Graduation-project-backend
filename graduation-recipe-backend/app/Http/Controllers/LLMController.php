@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Recipe;
+use App\Models\PantryItem;
 use App\Models\ShoppingItem;
 
 class LLMController extends Controller
@@ -13,32 +14,55 @@ class LLMController extends Controller
     {
         try {
             $user = $request->user();
+            $userPrompt = strtolower(trim($request->input('prompt')));
 
-            // ==============================
-            // 1️⃣ Get Pantry from DB
-            // ==============================
-            $pantry = ShoppingItem::where('user_id', $user->id)
-                ->pluck('item_name')
-                ->map(fn ($i) => strtolower(trim($i)));
-
-            if ($pantry->isEmpty()) {
+            /*
+            |--------------------------------------------------------------------------
+            | 1️⃣ Friendly greetings (no DB, no AI cost)
+            |--------------------------------------------------------------------------
+            */
+            if (preg_match('/^(hi|hello|hey|السلام|مرحبا)/i', $userPrompt)) {
                 return response()->json([
                     'personality' => 'friendly',
-                    'answer' => 'Your pantry is empty. Add ingredients first 🧺',
+                    'answer' => 'Hello! 👋 I can help you with recipes, pantry items, or shopping lists. What would you like to cook today?',
                     'recipes' => []
                 ]);
             }
 
-            // ==============================
-            // 2️⃣ Load Recipes + Match Engine
-            // ==============================
+            /*
+            |--------------------------------------------------------------------------
+            | 2️⃣ Load Pantry (SOURCE OF TRUTH)
+            |--------------------------------------------------------------------------
+            */
+            $pantry = PantryItem::where('user_id', $user->id)
+                ->pluck('item_name')
+                ->map(fn ($i) => strtolower(trim($i)));
+
+            /*
+            |--------------------------------------------------------------------------
+            | 3️⃣ Load Recipes
+            |--------------------------------------------------------------------------
+            */
             $recipes = Recipe::with('ingredients')->get();
 
+            if ($recipes->isEmpty()) {
+                return response()->json([
+                    'personality' => 'friendly',
+                    'answer' => 'No recipes are available yet.',
+                    'recipes' => []
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 4️⃣ Match Engine (Laravel brain 🧠)
+            |--------------------------------------------------------------------------
+            */
             $matchedRecipes = $recipes->map(function ($recipe) use ($pantry) {
 
                 $ingredients = $recipe->ingredients
                     ->pluck('name')
-                    ->map(fn ($i) => strtolower($i));
+                    ->map(fn ($i) => strtolower(trim($i)));
 
                 $matched = $ingredients->intersect($pantry);
                 $missing = $ingredients->diff($pantry);
@@ -51,12 +75,12 @@ class LLMController extends Controller
                     'recipe' => $recipe,
                     'matched' => $matched,
                     'missing' => $missing,
-                    'confidence' => $confidence
+                    'confidence' => $confidence,
                 ];
             })
-            ->filter(fn ($r) =>
-                $r['confidence'] >= 0.5 && $r['missing']->count() <= 1
-            )
+            // 🎯 rules
+            ->filter(fn ($r) => $r['confidence'] >= 0.5)
+            ->filter(fn ($r) => $r['missing']->count() <= 1)
             ->sortByDesc('confidence')
             ->values();
 
@@ -68,38 +92,53 @@ class LLMController extends Controller
                 ]);
             }
 
-            // ==============================
-            // 3️⃣ Pick Best Recipe
-            // ==============================
+            /*
+            |--------------------------------------------------------------------------
+            | 5️⃣ Pick Best Recipe
+            |--------------------------------------------------------------------------
+            */
             $best = $matchedRecipes->first();
             $recipe = $best['recipe'];
 
-            // ==============================
-            // 4️⃣ Auto-add missing ingredients to shopping list
-            // ==============================
-            foreach ($best['missing'] as $missingIngredient) {
+            /*
+            |--------------------------------------------------------------------------
+            | 6️⃣ Auto-add missing ingredients to Shopping List
+            |--------------------------------------------------------------------------
+            */
+            foreach ($best['missing'] as $item) {
                 ShoppingItem::firstOrCreate([
                     'user_id' => $user->id,
-                    'item_name' => $missingIngredient
+                    'item_name' => $item
                 ]);
             }
 
-            // ==============================
-            // 5️⃣ Build Stable JSON Response
-            // ==============================
+            /*
+            |--------------------------------------------------------------------------
+            | 7️⃣ Build AI-style response (controlled)
+            |--------------------------------------------------------------------------
+            */
+            $answerText = $best['missing']->isEmpty()
+                ? "Great news! You can make **{$recipe->title}** with what you already have 🎉"
+                : "I recommend **{$recipe->title}**! You’re only missing one ingredient, so I added it to your shopping list 🛒";
+
+            /*
+            |--------------------------------------------------------------------------
+            | 8️⃣ Final Stable JSON
+            |--------------------------------------------------------------------------
+            */
             return response()->json([
                 'personality' => 'friendly',
                 'confidence_score' => $best['confidence'],
-                'answer' => "I recommend **{$recipe->title}** based on your pantry 🥗",
+                'answer' => $answerText,
                 'recipes' => [
                     [
                         'id' => $recipe->id,
                         'title' => $recipe->title,
                         'slug' => $recipe->slug,
                         'image' => $recipe->image,
-                        'calories' => $recipe->calories,
-                        'difficulty' => $recipe->difficulty,
                         'time' => $recipe->time,
+                        'difficulty' => $recipe->difficulty,
+                        'calories' => $recipe->calories,
                         'link' => rtrim(config('app.url'), '/') . "/api/recipes/slug/{$recipe->slug}",
                         'ingredients' => $recipe->ingredients->pluck('name'),
                         'missing_ingredients' => $best['missing']->values(),
