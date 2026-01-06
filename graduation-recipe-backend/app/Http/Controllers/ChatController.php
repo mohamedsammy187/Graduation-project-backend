@@ -14,7 +14,7 @@ class ChatController extends Controller
         $userMessage = $request->message;
 
         // For now, we will respond with a static echo
-        $botResponse = "You said: " . $userMessage;
+        $botResponse = "You said: " . $userMessage .",login to use chatting ai";
 
         return response()->json([
             "status" => "success",

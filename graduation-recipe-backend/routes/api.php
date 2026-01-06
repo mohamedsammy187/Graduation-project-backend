@@ -36,8 +36,6 @@ Route::post('/recipes', [RecipeController::class, 'store']);
 //simple chat route 
 Route::post('/chat', [ChatController::class, 'handle']);
 
-//chat for model (Will be upgraded)
-Route::post('/ask', [LLMController::class, 'ask']);
 
 // Auth Routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -59,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/shopping-list', [ShoppingListController::class, 'store']);
     Route::patch('/shopping-list/{id}', [ShoppingListController::class, 'toggle']);
     Route::delete('/shopping-list/{id}', [ShoppingListController::class, 'destroy']);
-    
+
     //match-pantry
     Route::get('/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
     // Route::match(['get', 'post'], '/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
@@ -67,7 +65,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/shopping/migrate', [ShoppingListController::class, 'migrate']);
     //surprise-me
     Route::get('/recipes/surprise-me', [RecipeController::class, 'surpriseMe']);
-
+    //chat for model (Will be upgraded)
+    Route::post('/ask', [LLMController::class, 'ask']);
+    
     //logout route
     Route::post('/logout', [AuthController::class, 'logout']);
     //test auth route
