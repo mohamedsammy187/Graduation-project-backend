@@ -65,7 +65,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::match(['get', 'post'], '/recipes/match-pantry', [RecipeController::class, 'matchPantry']);
     //shopping  
     Route::post('/shopping/migrate', [ShoppingListController::class, 'migrate']);
-
+    //surprise-me
+    Route::get('/recipes/surprise-me', [RecipeController::class, 'surpriseMe']);
 
     //logout route
     Route::post('/logout', [AuthController::class, 'logout']);

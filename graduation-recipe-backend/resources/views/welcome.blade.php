@@ -96,6 +96,10 @@
     POST or GET    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal&meal_type=breakfast&temperature=hot
 
     </p>
+    <p>
+        //surprise me accept token only 
+        GET http://127.0.0.1:8000/api/recipes/surprise-me wire
+    </p>
     </p>
 </body>
 

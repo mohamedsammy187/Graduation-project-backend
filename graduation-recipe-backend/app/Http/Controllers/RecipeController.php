@@ -6,6 +6,7 @@ use App\Models\Ingredient;
 use App\Models\Recipe;
 use Illuminate\Http\Request;
 use App\Models\PantryItem;
+use App\Models\ShoppingItem;
 
 class RecipeController extends Controller
 {
@@ -82,7 +83,7 @@ class RecipeController extends Controller
 
 
 
-    
+
 
     public function matchPantry(Request $request)
     {
@@ -165,6 +166,90 @@ class RecipeController extends Controller
             'status' => 'success',
             'count' => $matchedRecipes->count(),
             'data' => $matchedRecipes
+        ]);
+    }
+
+
+
+
+    public function surpriseMe(Request $request)
+    {
+        $user = $request->user();
+
+        // 1️⃣ Get pantry from shopping_items
+        $pantry = ShoppingItem::where('user_id', $user->id)
+            ->pluck('item_name')
+            ->map(fn($i) => strtolower(trim($i)));
+
+        if ($pantry->isEmpty()) {
+            return response()->json([
+                'status' => 'fail',
+                'message' => 'Your pantry is empty. Add ingredients first.'
+            ], 400);
+        }
+
+        // 2️⃣ Load recipes
+        $recipes = Recipe::with('ingredients')->get();
+
+        $matched = $recipes
+            ->filter(fn($r) => $r->id !== $user->last_surprise_recipe_id)
+            ->map(function ($recipe) use ($pantry) {
+
+                $ingredients = $recipe->ingredients
+                    ->pluck('name')
+                    ->map(fn($i) => strtolower($i));
+
+                $matched = $ingredients->intersect($pantry);
+                $missing = $ingredients->diff($pantry);
+
+                return [
+                    'recipe' => $recipe,
+                    'matched_count' => $matched->count(),
+                    'missing_count' => $missing->count(),
+                    'missing' => $missing
+                ];
+            })
+
+            // ✅ must match at least 1 ingredient
+            ->filter(fn($r) => $r['matched_count'] > 0)
+
+            // 🎲 allow missing one
+            ->filter(fn($r) => $r['missing_count'] <= 1)
+            ->values();
+
+        if ($matched->isEmpty()) {
+            return response()->json([
+                'status' => 'fail',
+                'message' => 'No suitable recipe found with your pantry.'
+            ]);
+        }
+
+        // 3️⃣ Pick random recipe
+        $selected = $matched->random();
+        $recipe = $selected['recipe'];
+
+        // 4️⃣ Save last suggested recipe
+        $user->update([
+            'last_surprise_recipe_id' => $recipe->id
+        ]);
+
+        // 5️⃣ Response
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'id' => $recipe->id,
+                'title' => $recipe->title,
+                'slug' => $recipe->slug,
+                'image' => $recipe->image,
+                'time' => $recipe->time,
+                'difficulty' => $recipe->difficulty,
+                'calories' => $recipe->calories,
+                'ingredients' => $recipe->ingredients->map(fn($i) => [
+                    'id' => $i->id,
+                    'name' => $i->name
+                ]),
+                'missing_ingredients' => $selected['missing']->values(),
+            ]
         ]);
     }
 }
