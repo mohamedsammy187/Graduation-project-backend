@@ -100,6 +100,7 @@ class LLMController extends Controller
                         'calories' => $recipe->calories,
                         'difficulty' => $recipe->difficulty,
                         'time' => $recipe->time,
+                        'link' => rtrim(config('app.url'), '/') . "/api/recipes/slug/{$recipe->slug}",
                         'ingredients' => $recipe->ingredients->pluck('name'),
                         'missing_ingredients' => $best['missing']->values(),
                         'confidence_score' => $best['confidence']
