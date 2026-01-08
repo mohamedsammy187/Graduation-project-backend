@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Recipe;
+use App\Models\Ingredient;
 use App\Models\PantryItem;
 use App\Models\ShoppingItem;
 
@@ -11,185 +12,276 @@ class LLMController extends Controller
 {
     public function ask(Request $request)
     {
-        try {
-            $user = $request->user();
-            $userPrompt = trim($request->input('prompt'));
+        $user = $request->user();
+        $message = strtolower(trim($request->input('prompt')));
 
-            if (empty($userPrompt)) {
-                return response()->json([
-                    'personality' => 'friendly',
-                    'answer' => 'Hi there! 🍳 Please tell me what you want to cook or know about your pantry.',
-                    'recipes' => []
-                ]);
-            }
+        /*
+        |--------------------------------------------------------------------------
+        | Normalize Arabic & English
+        |--------------------------------------------------------------------------
+        */
+        $normalized = $this->normalizeText($message);
 
-            /*
-            |--------------------------------------------------------------------------
-            | 1️⃣ Friendly greetings
-            |--------------------------------------------------------------------------
-            */
-            if (preg_match('/^(hi|hello|hey|السلام|مرحبا)/i', $userPrompt)) {
-                return response()->json([
-                    'personality' => 'friendly',
-                    'answer' => 'Hello! 👋 I can help you with recipes, pantry items, or shopping lists. What would you like to cook today?',
-                    'recipes' => []
-                ]);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 2️⃣ Load full pantry
-            |--------------------------------------------------------------------------
-            */
-            $pantry = PantryItem::where('user_id', $user->id)
-                ->pluck('item_name')
-                ->map(fn($i) => strtolower(trim($i)));
-
-            /*
-            |--------------------------------------------------------------------------
-            | 3️⃣ Load full recipes DB
-            |--------------------------------------------------------------------------
-            */
-            $recipes = Recipe::with('ingredients')->get();
-
-            if ($recipes->isEmpty()) {
-                return response()->json([
-                    'personality' => 'friendly',
-                    'answer' => 'No recipes are available yet.',
-                    'recipes' => []
-                ]);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 4️⃣ Extract keywords from user question
-            |--------------------------------------------------------------------------
-            */
-            $keywords = collect(explode(' ', strtolower($userPrompt)))
-                ->map(fn($w) => trim($w, " ?!.,"))
-                ->filter(fn($w) => strlen($w) > 2);
-
-            /*
-            |--------------------------------------------------------------------------
-            | 5️⃣ Filter recipes by keywords
-            |--------------------------------------------------------------------------
-            */
-            $filteredRecipes = $recipes->filter(function ($recipe) use ($keywords) {
-
-                $title = strtolower($recipe->title);
-                $ingredients = $recipe->ingredients
-                    ->pluck('name')
-                    ->map(fn($i) => strtolower($i));
-
-                foreach ($keywords as $word) {
-                    if (str_contains($title, $word) || $ingredients->contains($word)) {
-                        return true;
-                    }
-                }
-
-                return false;
-            });
-
-            // fallback: use full DB if keyword filter returns empty
-            if ($filteredRecipes->isEmpty()) {
-                $filteredRecipes = $recipes;
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 6️⃣ Match recipes with pantry
-            |--------------------------------------------------------------------------
-            */
-            $matchedRecipes = $filteredRecipes->map(function ($recipe) use ($pantry) {
-
-                $ingredients = $recipe->ingredients
-                    ->pluck('name')
-                    ->map(fn($i) => strtolower(trim($i)));
-
-                $matched = $ingredients->intersect($pantry);
-                $missing = $ingredients->diff($pantry);
-
-                $confidence = $ingredients->count() > 0
-                    ? round($matched->count() / $ingredients->count(), 2)
-                    : 0;
-
-                return [
-                    'recipe' => $recipe,
-                    'matched' => $matched,
-                    'missing' => $missing,
-                    'confidence' => $confidence
-                ];
-            })
-            ->filter(fn($r) => $r['confidence'] >= 0.5)
-            ->filter(fn($r) => $r['missing']->count() <= 1)
-            ->sortByDesc('confidence')
-            ->values();
-
-            /*
-            |--------------------------------------------------------------------------
-            | 7️⃣ Select best recipe
-            |--------------------------------------------------------------------------
-            */
-            if ($matchedRecipes->isEmpty()) {
-                return response()->json([
-                    'personality' => 'friendly',
-                    'answer' => 'I couldn’t find a recipe that matches your pantry yet 🍽️',
-                    'recipes' => []
-                ]);
-            }
-
-            $best = $matchedRecipes->first();
-            $recipe = $best['recipe'];
-
-            /*
-            |--------------------------------------------------------------------------
-            | 8️⃣ Auto-add missing ingredients to Shopping List
-            |--------------------------------------------------------------------------
-            */
-            foreach ($best['missing'] as $item) {
-                ShoppingItem::firstOrCreate([
-                    'user_id' => $user->id,
-                    'item_name' => $item
-                ]);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 9️⃣ Build AI-style response
-            |--------------------------------------------------------------------------
-            */
-            $answerText = $best['missing']->isEmpty()
-                ? "Great news! You can make **{$recipe->title}** with what you already have 🎉"
-                : "I recommend **{$recipe->title}**! You’re only missing one ingredient, so I added it to your shopping list 🛒";
-
-            return response()->json([
-                'personality' => 'friendly',
-                'confidence_score' => $best['confidence'],
-                'answer' => $answerText,
-                'recipes' => [
-                    [
-                        'id' => $recipe->id,
-                        'title' => $recipe->title,
-                        'slug' => $recipe->slug,
-                        'image' => $recipe->image,
-                        'time' => $recipe->time,
-                        'difficulty' => $recipe->difficulty,
-                        'calories' => $recipe->calories,
-                        'link' => rtrim(config('app.url'), '/') . "/api/recipes/slug/{$recipe->slug}",
-                        'ingredients' => $recipe->ingredients->pluck('name'),
-                        'missing_ingredients' => $best['missing']->values(),
-                        'steps' => json_decode($recipe->steps, true),
-                        'confidence_score' => $best['confidence']
-                    ]
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'personality' => 'friendly',
-                'answer' => 'Something went wrong, please try again.',
-                'recipes' => [],
-                'error' => $e->getMessage()
-            ], 500);
+        /*
+        |--------------------------------------------------------------------------
+        | 1️⃣ Inquiry (Pantry / Shopping List)
+        |--------------------------------------------------------------------------
+        */
+        if ($this->isInquiry($normalized)) {
+            return $this->handleInquiry($normalized, $user);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2️⃣ Recipe Detail Questions (ingredients / steps / time)
+        |--------------------------------------------------------------------------
+        */
+        if ($this->isRecipeDetailQuestion($normalized)) {
+            return $this->handleRecipeDetails($normalized);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3️⃣ Ingredient-based Search (DB FIRST)
+        |--------------------------------------------------------------------------
+        */
+        if ($this->mentionsIngredients($normalized)) {
+            return $this->searchByIngredients($normalized);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4️⃣ Pantry Mode (Smart Matching)
+        |--------------------------------------------------------------------------
+        */
+        if ($this->isPantryIntent($normalized)) {
+            return $this->pantryMatch($user);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 5️⃣ Keyword Filtering (existing logic)
+        |--------------------------------------------------------------------------
+        */
+        if ($this->hasKeywords($normalized)) {
+            return $this->filterByKeywords($normalized);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 6️⃣ General Recommendation
+        |--------------------------------------------------------------------------
+        */
+        if ($this->isGeneralRecommendation($normalized)) {
+            return $this->generalRecommendation();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 7️⃣ Chit-chat (Fallback)
+        |--------------------------------------------------------------------------
+        */
+        return $this->chitChat();
+    }
+
+    /* ============================================================
+     | 🧠 Language Helpers
+     ============================================================ */
+
+    private function normalizeText($text)
+    {
+        return str_replace(
+            ['؟', 'إ', 'أ', 'آ'],
+            ['?', 'ا', 'ا', 'ا'],
+            $text
+        );
+    }
+
+    /* ============================================================
+     | 1️⃣ Inquiry
+     ============================================================ */
+
+    private function isInquiry($text)
+    {
+        return str_contains($text, 'عندي')
+            || str_contains($text, 'pantry')
+            || str_contains($text, 'shopping')
+            || str_contains($text, 'شوبينج')
+            || str_contains($text, 'ناقص');
+    }
+
+    private function handleInquiry($text, $user)
+    {
+        if (str_contains($text, 'عندي') || str_contains($text, 'pantry')) {
+            return response()->json([
+                'type' => 'pantry',
+                'items' => PantryItem::where('user_id', $user->id)->pluck('item_name')
+            ]);
+        }
+
+        if (str_contains($text, 'shopping') || str_contains($text, 'شوبينج')) {
+            return response()->json([
+                'type' => 'shopping',
+                'items' => ShoppingItem::where('user_id', $user->id)->pluck('item_name')
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'تحب تسأل عن وصفة معينة؟ 🍽️'
+        ]);
+    }
+
+    /* ============================================================
+     | 2️⃣ Recipe Details
+     ============================================================ */
+
+    private function isRecipeDetailQuestion($text)
+    {
+        return str_contains($text, 'مكونات')
+            || str_contains($text, 'ingredients')
+            || str_contains($text, 'خطوات')
+            || str_contains($text, 'steps')
+            || str_contains($text, 'وقت')
+            || str_contains($text, 'time');
+    }
+
+    private function handleRecipeDetails($text)
+    {
+        $recipe = Recipe::where(function ($q) use ($text) {
+            $q->whereRaw("LOWER(title) LIKE ?", ["%$text%"]);
+        })->with('ingredients')->first();
+
+        if (!$recipe) {
+            return response()->json([
+                'message' => 'لم أجد الوصفة المطلوبة ❌'
+            ]);
+        }
+
+        if (str_contains($text, 'مكونات') || str_contains($text, 'ingredients')) {
+            return $recipe->ingredients->pluck('name');
+        }
+
+        if (str_contains($text, 'خطوات') || str_contains($text, 'steps')) {
+            return $recipe->steps;
+        }
+
+        if (str_contains($text, 'وقت') || str_contains($text, 'time')) {
+            return $recipe->time;
+        }
+
+        return null;
+    }
+
+    /* ============================================================
+     | 3️⃣ Ingredient-based Search
+     ============================================================ */
+
+    private function mentionsIngredients($text)
+    {
+        return Ingredient::whereRaw("LOWER(?) LIKE CONCAT('%', name, '%')", [$text])->exists();
+    }
+
+    private function searchByIngredients($text)
+    {
+        $ingredientIds = Ingredient::whereRaw("LOWER(?) LIKE CONCAT('%', name, '%')", [$text])
+            ->pluck('id');
+
+        $recipes = Recipe::whereHas('ingredients', function ($q) use ($ingredientIds) {
+            $q->whereIn('ingredients.id', $ingredientIds);
+        })->with('ingredients')->get();
+
+        return response()->json([
+            'mode' => 'ingredient_search',
+            'recipes' => $recipes
+        ]);
+    }
+
+    /* ============================================================
+     | 4️⃣ Pantry Mode (Smart Matching)
+     ============================================================ */
+
+    private function isPantryIntent($text)
+    {
+        return str_contains($text, 'pantry')
+            || str_contains($text, 'عندي')
+            || str_contains($text, 'from my ingredients');
+    }
+
+    private function pantryMatch($user)
+    {
+        $pantry = PantryItem::where('user_id', $user->id)
+            ->pluck('item_name')
+            ->map(fn($i) => strtolower($i));
+
+        $recipes = Recipe::with('ingredients')->get();
+
+        $matched = $recipes->map(function ($recipe) use ($pantry) {
+            $ingredients = $recipe->ingredients->pluck('name')->map(fn($i) => strtolower($i));
+            $matched = $ingredients->intersect($pantry);
+            $missing = $ingredients->diff($pantry);
+
+            return [
+                'recipe' => $recipe,
+                'confidence' => round($matched->count() / max($ingredients->count(), 1), 2),
+                'missing' => $missing
+            ];
+        })
+        ->filter(fn($r) => $r['confidence'] >= 0.5)
+        ->sortByDesc('confidence')
+        ->values();
+
+        return response()->json([
+            'mode' => 'pantry',
+            'results' => $matched,
+            'note' => 'تحب أضيف المكونات الناقصة للشوبينج ليست؟'
+        ]);
+    }
+
+    /* ============================================================
+     | 5️⃣ Keyword Filtering
+     ============================================================ */
+
+    private function hasKeywords($text)
+    {
+        return preg_match('/(fish|chicken|حلو|فطار|سمك|عشا)/', $text);
+    }
+
+    private function filterByKeywords($text)
+    {
+        return Recipe::whereRaw("LOWER(title) LIKE ?", ["%$text%"])
+            ->orWhereHas('ingredients', function ($q) use ($text) {
+                $q->whereRaw("LOWER(name) LIKE ?", ["%$text%"]);
+            })
+            ->get();
+    }
+
+    /* ============================================================
+     | 6️⃣ General Recommendation
+     ============================================================ */
+
+    private function isGeneralRecommendation($text)
+    {
+        return in_array($text, [
+            'suggest food',
+            'عايز اكل',
+            'hungry',
+            'recommend'
+        ]);
+    }
+
+    private function generalRecommendation()
+    {
+        return Recipe::inRandomOrder()->first();
+    }
+
+    /* ============================================================
+     | 7️⃣ Chit-chat
+     ============================================================ */
+
+    private function chitChat()
+    {
+        return response()->json([
+            'message' => '👋 أهلاً! قولي تحب تطبخ ايه أو اكتب المكونات اللي عندك'
+        ]);
     }
 }
