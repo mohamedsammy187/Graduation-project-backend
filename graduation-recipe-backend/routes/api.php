@@ -67,7 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/recipes/surprise-me', [RecipeController::class, 'surpriseMe']);
     //chat for model (Will be upgraded)
     Route::post('/ask', [LLMController::class, 'ask']);
-    
+
     //logout route
     Route::post('/logout', [AuthController::class, 'logout']);
     //test auth route
@@ -174,3 +174,7 @@ Route::post('/uploadimage', [ImageController::class, 'uploadimage']);
 //     ->middleware('jwt.auth'); // ✅ JWT middleware, not sanctum
 
 // Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('verify.token');
+
+
+
+Route::post('/smart-assistant', [App\Http\Controllers\SmartChatController::class, 'handle'])->middleware('auth:sanctum');
