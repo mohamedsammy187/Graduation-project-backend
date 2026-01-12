@@ -22,10 +22,22 @@ class Recipe extends Model
         'difficulty',
         'calories'
     ];
+
+    
     public function ingredients()
     {
-        return $this->belongsToMany(Ingredient::class, 'ingredient_recipe');
+        return $this->belongsToMany(Ingredient::class, 'ingredient_recipe')
+            ->withPivot([
+                'quantity',
+                'unit',
+                'display_text',
+                'is_optional',
+                'ingredient_name_ar',
+                'sort_order'
+            ])
+            ->orderBy('ingredient_recipe.sort_order');
     }
+
 
     public function ask(Request $request)
     {

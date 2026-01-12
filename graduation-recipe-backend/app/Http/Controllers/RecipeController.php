@@ -19,7 +19,7 @@ class RecipeController extends Controller
 
     public function index()
     {
-        $recipes = Recipe::with('ingredients')->get();
+        $recipes = Recipe::with('ingredients')->paginate(12);
 
         return response()->json([
             'data' => $recipes->map(function ($recipe) {
@@ -111,8 +111,22 @@ class RecipeController extends Controller
         );
 
         // 🍽 2. Load recipes
-        $recipes = Recipe::with('ingredients')->get();
-
+        $recipes = Recipe::with('ingredients');
+        //  filters for matching
+        if ($request->query('keyword')) {
+            $keyword = $request->query('keyword');
+            $recipes = $recipes->where('title', 'like', "%{$keyword}%");
+        }
+        if ($request->query('difficulty')) {
+            $difficulty = $request->query('difficulty');
+            $recipes = $recipes->where('difficulty', $difficulty);
+        }
+        if ($request->query('max_time')) {
+            $maxTime = $request->query('max_time');
+            $recipes = $recipes->where('time', '<=', $maxTime);
+        }
+        $recipes = $recipes->get();
+        // 🧠 Match Logic
         $matchedRecipes = $recipes
             ->map(function ($recipe) use ($pantry) {
 

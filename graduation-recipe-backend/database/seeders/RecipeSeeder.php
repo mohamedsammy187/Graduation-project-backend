@@ -5,14 +5,17 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Recipe;
 use App\Models\Ingredient;
+use Illuminate\Support\Str;
 
 class RecipeSeeder extends Seeder
 {
     public function run()
     {
         $recipes = [
+
             [
-                'title' => 'Pancakes',
+                'title_en' => 'Pancakes',
+                'title_ar' => 'بان كيك',
                 'category' => 'meal',
                 'meal_type' => 'breakfast',
                 'temperature' => 'cold',
@@ -20,15 +23,17 @@ class RecipeSeeder extends Seeder
                 'time' => '20 min',
                 'difficulty' => 'Easy',
                 'calories' => '350',
+                'servings' => 2,
+                'cuisine' => 'international',
+                'description_en' => 'Soft breakfast pancakes',
+                'description_ar' => 'بان كيك طري للفطور',
                 'ingredients' => ['flour', 'egg', 'milk', 'sugar'],
-                'steps' => [
-                    "Mix all ingredients",
-                    "Heat a pan",
-                    "Pour batter and cook both sides"
-                ],
+                'steps' => ['Mix all ingredients', 'Heat a pan', 'Cook both sides'],
             ],
+
             [
-                'title' => 'Omelette',
+                'title_en' => 'Omelette',
+                'title_ar' => 'أومليت',
                 'category' => 'meal',
                 'meal_type' => 'breakfast',
                 'temperature' => 'hot',
@@ -36,31 +41,72 @@ class RecipeSeeder extends Seeder
                 'time' => '10 min',
                 'difficulty' => 'Easy',
                 'calories' => '200',
+                'servings' => 1,
+                'cuisine' => 'international',
+                'description_en' => 'Classic egg omelette',
+                'description_ar' => 'أومليت بالبيض',
                 'ingredients' => ['egg', 'salt', 'pepper', 'butter'],
-                'steps' => [
-                    "Beat the eggs",
-                    "Heat butter in pan",
-                    "Pour eggs and cook until set"
-                ],
+                'steps' => ['Beat eggs', 'Heat butter', 'Cook until set'],
             ],
+
             [
-                'title' => 'French Toast',
+                'title_en' => 'Pizza',
+                'title_ar' => 'بيتزا',
                 'category' => 'meal',
-                'meal_type' => 'breakfast',
-                'temperature' => 'cold',
-                'image' => 'asset/img/french_toast.jpg',
-                'time' => '15 min',
-                'difficulty' => 'Easy',
-                'calories' => '250',
-                'ingredients' => ['bread', 'egg', 'milk', 'sugar'],
-                'steps' => [
-                    "Beat egg, milk, sugar",
-                    "Dip bread in mixture",
-                    "Cook on pan until golden"
-                ],
+                'meal_type' => 'lunch',
+                'temperature' => 'hot',
+                'image' => 'asset/img/p3.jpeg',
+                'time' => '25 min',
+                'difficulty' => 'Medium',
+                'calories' => '300',
+                'servings' => 3,
+                'cuisine' => 'italian',
+                'description_en' => 'Homemade pizza',
+                'description_ar' => 'بيتزا منزلية',
+                'ingredients' => ['flour', 'cheese', 'butter', 'egg', 'beef'],
+                'steps' => ['Prepare dough', 'Add toppings', 'Bake until ready'],
             ],
+
             [
-                'title' => 'Oats',
+                'title_en' => 'Grilled Fish',
+                'title_ar' => 'سمك مشوي',
+                'category' => 'meal',
+                'meal_type' => 'lunch',
+                'temperature' => 'hot',
+                'image' => 'asset/img/grilled_fish.jpg',
+                'time' => '30 min',
+                'difficulty' => 'Easy',
+                'calories' => '350',
+                'servings' => 2,
+                'cuisine' => 'seafood',
+                'description_en' => 'Healthy grilled fish',
+                'description_ar' => 'سمك مشوي صحي',
+                'ingredients' => ['fish', 'salt', 'pepper', 'lemon', 'olive oil'],
+                'steps' => ['Season fish', 'Grill', 'Serve'],
+            ],
+
+            [
+                'title_en' => 'Shrimp Pasta',
+                'title_ar' => 'مكرونة بالجمبري',
+                'category' => 'meal',
+                'meal_type' => 'dinner',
+                'temperature' => 'hot',
+                'image' => 'asset/img/shrimp_pasta.jpg',
+                'time' => '35 min',
+                'difficulty' => 'Medium',
+                'calories' => '500',
+                'servings' => 2,
+                'cuisine' => 'italian',
+                'description_en' => 'Creamy shrimp pasta',
+                'description_ar' => 'مكرونة بالجمبري',
+                'ingredients' => ['shrimp', 'pasta', 'garlic', 'olive oil', 'salt'],
+                'steps' => ['Boil pasta', 'Cook shrimp', 'Mix together'],
+            ],
+
+
+            [
+                'title_en' => 'Oats',
+                'title_ar' => 'الشوفان',
                 'category' => 'meal',
                 'meal_type' => 'breakfast',
                 'temperature' => 'hot',
@@ -68,6 +114,10 @@ class RecipeSeeder extends Seeder
                 'time' => '5 min',
                 'difficulty' => 'Easy',
                 'calories' => '150',
+                'servings' => 1,
+                'cuisine' => 'international',
+                'description_en' => 'Healthy oats breakfast',
+                'description_ar' => 'فطور صحي من الشوفان',
                 'ingredients' => ['oats', 'milk', 'honey'],
                 'steps' => [
                     "Boil milk or water",
@@ -76,7 +126,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Grilled Chicken',
+                'title_en' => 'Grilled Chicken',
+                'title_ar' => 'دجاج مشوي',
                 'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
@@ -84,6 +135,10 @@ class RecipeSeeder extends Seeder
                 'time' => '40 min',
                 'difficulty' => 'Medium',
                 'calories' => '400',
+                'servings' => 2,
+                'cuisine' => 'international',
+                'description_en' => 'Delicious grilled chicken',
+                'description_ar' => 'دجاج مشوي لذيذ',
                 'ingredients' => ['chicken', 'salt', 'pepper', 'olive oil', 'herbs'],
                 'steps' => [
                     "Season the chicken",
@@ -92,7 +147,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Pasta',
+                'title_en' => 'Pasta',
+                'title_ar' => 'معكرونة',
                 'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
@@ -100,6 +156,10 @@ class RecipeSeeder extends Seeder
                 'time' => '30 min',
                 'difficulty' => 'Easy',
                 'calories' => '450',
+                'servings' => 2,
+                'cuisine' => 'italian',
+                'description_en' => 'Classic pasta dish',
+                'description_ar' => 'طبق معكرونة كلاسيكي',
                 'ingredients' => ['pasta', 'chicken', 'sauce', 'salt', 'pepper'],
                 'steps' => [
                     "Boil pasta",
@@ -108,7 +168,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Burger',
+                'title_en' => 'Burger',
+                'title_ar' => 'برجر',
                 'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
@@ -116,6 +177,10 @@ class RecipeSeeder extends Seeder
                 'time' => '20 min',
                 'difficulty' => 'Medium',
                 'calories' => '600',
+                'servings' => 1,
+                'cuisine' => 'american',
+                'description_en' => 'Juicy beef burger',
+                'description_ar' => 'برجر اللحم العصير',
                 'ingredients' => ['beef', 'bun', 'cheese', 'lettuce', 'tomato'],
                 'steps' => [
                     "Cook beef patty",
@@ -123,7 +188,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Chicken Rice',
+                'title_en' => 'Chicken Rice',
+                'title_ar' => 'أرز بالدجاج',
                 'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
@@ -131,6 +197,10 @@ class RecipeSeeder extends Seeder
                 'time' => '45 min',
                 'difficulty' => 'Medium',
                 'calories' => '500',
+                'servings' => 3,
+                'cuisine' => 'middle_eastern',
+                'description_en' => 'Aromatic chicken rice',
+                'description_ar' => 'أرز عطري بالدجاج',
                 'ingredients' => ['chicken', 'rice', 'spices', 'salt', 'oil'],
                 'steps' => [
                     "Cook rice",
@@ -139,7 +209,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Lemon Juice',
+                'title_en' => 'Lemon Juice',
+                'title_ar' => 'عصير الليمون',
                 'category' => 'drink',
                 'meal_type' => 'breakfast',
                 'temperature' => 'cold',
@@ -147,6 +218,10 @@ class RecipeSeeder extends Seeder
                 'time' => '5 min',
                 'difficulty' => 'Easy',
                 'calories' => '50',
+                'servings' => 2,
+                'cuisine' => 'international',
+                'description_en' => 'Fresh lemon juice',
+                'description_ar' => 'عصير ليمون طازج',
                 'ingredients' => ['lemon', 'water', 'sugar'],
                 'steps' => [
                     "Squeeze lemons",
@@ -155,14 +230,19 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Smoothie',
+                'title_en' => 'Smoothie',
+                'title_ar' => 'سموثي',
                 'category' => 'drink',
-                'meal_type' => 'dinner',
+                'meal_type' => 'breakfast',
                 'temperature' => 'cold',
                 'image' => 'asset/img/smoothie.jpg',
                 'time' => '10 min',
                 'difficulty' => 'Easy',
                 'calories' => '200',
+                'servings' => 1,
+                'cuisine' => 'international',
+                'description_en' => 'Creamy fruit smoothie',
+                'description_ar' => 'سموثي الفواكه الكريمي',
                 'ingredients' => ['banana', 'milk', 'yogurt', 'honey'],
                 'steps' => [
                     "Blend all ingredients",
@@ -170,7 +250,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Fruit Salad',
+                'title_en' => 'Fruit Salad',
+                'title_ar' => 'سلطة الفواكه',
                 'category' => 'meal',
                 'meal_type' => 'dinner',
                 'temperature' => 'cold',
@@ -178,6 +259,10 @@ class RecipeSeeder extends Seeder
                 'time' => '10 min',
                 'difficulty' => 'Easy',
                 'calories' => '150',
+                'servings' => 2,
+                'cuisine' => 'international',
+                'description_en' => 'Fresh fruit salad',
+                'description_ar' => 'سلطة فواكه طازجة',
                 'ingredients' => ['apple', 'banana', 'orange', 'yogurt'],
                 'steps' => [
                     "Cut fruits",
@@ -186,7 +271,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Cookies',
+                'title_en' => 'Cookies',
+                'title_ar' => 'بسكويت',
                 'category' => 'snack',
                 'meal_type' => 'dinner',
                 'temperature' => 'cold',
@@ -194,6 +280,10 @@ class RecipeSeeder extends Seeder
                 'time' => '25 min',
                 'difficulty' => 'Medium',
                 'calories' => '300',
+                'servings' => 4,
+                'cuisine' => 'international',
+                'description_en' => 'Homemade cookies',
+                'description_ar' => 'بسكويت منزلي',
                 'ingredients' => ['flour', 'sugar', 'butter', 'egg', 'chocolate'],
                 'steps' => [
                     "Mix all ingredients",
@@ -202,40 +292,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Pizza',
-                'category' => 'meal',
-                'meal_type' => 'lunch',
-                'temperature' => 'hot',
-                'image' => 'asset/img/p3.jpeg',
-                'time' => '25 min',
-                'difficulty' => 'Medium',
-                'calories' => '300',
-                'ingredients' => ['flour', 'cheese', 'butter', 'egg', 'meat'],
-                'steps' => [
-                    "Prepare dough",
-                    "Add toppings",
-                    "Bake until ready"
-                ],
-            ],
-
-            [
-                'title' => 'Grilled Fish',
-                'category' => 'meal',
-                'meal_type' => 'lunch',
-                'temperature' => 'hot',
-                'image' => 'asset/img/grilled_fish.jpg',
-                'time' => '30 min',
-                'difficulty' => 'Easy',
-                'calories' => '350',
-                'ingredients' => ['fish', 'salt', 'pepper', 'lemon', 'olive oil'],
-                'steps' => [
-                    "Clean the fish",
-                    "Season with salt, pepper and lemon",
-                    "Grill until cooked"
-                ],
-            ],
-            [
-                'title' => 'Fried Fish',
+                'title_en' => 'Fried Fish',
+                'title_ar' => 'سمك مقلي',
                 'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
@@ -243,6 +301,10 @@ class RecipeSeeder extends Seeder
                 'time' => '25 min',
                 'difficulty' => 'Medium',
                 'calories' => '450',
+                'servings' => 2,
+                'cuisine' => 'seafood',
+                'description_en' => 'Crispy fried fish',
+                'description_ar' => 'سمك مقلي مقرمش',
                 'ingredients' => ['fish', 'flour', 'salt', 'pepper', 'oil'],
                 'steps' => [
                     "Season the fish",
@@ -251,23 +313,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Shrimp Pasta',
-                'category' => 'meal',
-                'meal_type' => 'dinner',
-                'temperature' => 'hot',
-                'image' => 'asset/img/shrimp_pasta.jpg',
-                'time' => '35 min',
-                'difficulty' => 'Medium',
-                'calories' => '500',
-                'ingredients' => ['shrimp', 'pasta', 'garlic', 'olive oil', 'salt'],
-                'steps' => [
-                    "Boil pasta",
-                    "Cook shrimp with garlic",
-                    "Mix shrimp with pasta and olive oil"
-                ],
-            ],
-            [
-                'title' => 'Seafood Rice',
+                'title_en' => 'Seafood Rice',
+                'title_ar' => 'أرز بحري',
                 'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
@@ -275,6 +322,10 @@ class RecipeSeeder extends Seeder
                 'time' => '40 min',
                 'difficulty' => 'Medium',
                 'calories' => '520',
+                'servings' => 3,
+                'cuisine' => 'seafood',
+                'description_en' => 'Delicious seafood rice',
+                'description_ar' => 'أرز بحري لذيذ',
                 'ingredients' => ['rice', 'shrimp', 'fish', 'spices', 'salt'],
                 'steps' => [
                     "Cook rice",
@@ -283,7 +334,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Tuna Salad',
+                'title_en' => 'Tuna Salad',
+                'title_ar' => 'سلطة التونة',
                 'category' => 'meal',
                 'meal_type' => 'dinner',
                 'temperature' => 'cold',
@@ -291,6 +343,10 @@ class RecipeSeeder extends Seeder
                 'time' => '10 min',
                 'difficulty' => 'Easy',
                 'calories' => '300',
+                'servings' => 1,
+                'cuisine' => 'seafood',
+                'description_en' => 'Fresh tuna salad',
+                'description_ar' => 'سلطة التونة الطازجة',
                 'ingredients' => ['tuna', 'lettuce', 'tomato', 'olive oil', 'lemon'],
                 'steps' => [
                     "Prepare vegetables",
@@ -299,7 +355,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Shrimp Soup',
+                'title_en' => 'Shrimp Soup',
+                'title_ar' => 'حساء الجمبري',
                 'category' => 'meal',
                 'meal_type' => 'dinner',
                 'temperature' => 'hot',
@@ -307,6 +364,10 @@ class RecipeSeeder extends Seeder
                 'time' => '30 min',
                 'difficulty' => 'Easy',
                 'calories' => '280',
+                'servings' => 2,
+                'cuisine' => 'seafood',
+                'description_en' => 'Delicate shrimp soup',
+                'description_ar' => 'حساء الجمبري اللذيذ',
                 'ingredients' => ['shrimp', 'onion', 'garlic', 'salt', 'water'],
                 'steps' => [
                     "Boil water",
@@ -315,7 +376,8 @@ class RecipeSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Fish Sandwich',
+                'title_en' => 'Fish Sandwich',
+                'title_ar' => 'ساندويتش السمك',
                 'category' => 'meal',
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
@@ -323,6 +385,10 @@ class RecipeSeeder extends Seeder
                 'time' => '15 min',
                 'difficulty' => 'Easy',
                 'calories' => '400',
+                'servings' => 1,
+                'cuisine' => 'seafood',
+                'description_en' => 'Tasty fish sandwich',
+                'description_ar' => 'ساندويتش السمك اللذيذ',
                 'ingredients' => ['fish', 'bun', 'lettuce', 'tomato', 'sauce'],
                 'steps' => [
                     "Cook the fish",
@@ -330,37 +396,31 @@ class RecipeSeeder extends Seeder
                     "Assemble the sandwich"
                 ],
             ],
-
-
         ];
 
         foreach ($recipes as $data) {
 
-            // 1️⃣ Create recipe (بدون ingredients)
             $recipe = Recipe::create([
-                'title'       => $data['title'],
-                'category'    => $data['category'],
-                'meal_type'   => $data['meal_type'],
+                'title' => $data['title_en'],
+                'title_en' => $data['title_en'],
+                'title_ar' => $data['title_ar'],
+                'category' => $data['category'],
+                'meal_type' => $data['meal_type'],
                 'temperature' => $data['temperature'],
-                'image'       => $data['image'],
-                'time'        => $data['time'],
-                'difficulty'  => $data['difficulty'],
-                'calories'    => $data['calories'],
-                'steps'       => json_encode($data['steps']),
+                'slug' => Str::slug($data['title_en']) . '-' . uniqid(),
+                'image' => $data['image'],
+                'time' => $data['time'],
+                'difficulty' => $data['difficulty'],
+                'cuisine' => $data['cuisine'],
+                'nutrition' => json_encode(['calories' => $data['calories']]),
+                'calories' => $data['calories'],
+                'servings' => $data['servings'],
+                'steps' => json_encode($data['steps']),
+                'description_en' => $data['description_en'],
+                'description_ar' => $data['description_ar'],
             ]);
 
-            // 2️⃣ Attach ingredients
-            $ingredientIds = [];
-
-            foreach ($data['ingredients'] as $name) {
-                $ingredient = Ingredient::firstOrCreate([
-                    'name' => strtolower(trim($name))
-                ]);
-
-                $ingredientIds[] = $ingredient->id;
-            }
-
-            // 3️⃣ Sync pivot table
+            $ingredientIds = Ingredient::whereIn('name', $data['ingredients'])->pluck('id');
             $recipe->ingredients()->sync($ingredientIds);
         }
     }
