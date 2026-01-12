@@ -125,6 +125,19 @@ class RecipeController extends Controller
             $maxTime = $request->query('max_time');
             $recipes = $recipes->where('time', '<=', $maxTime);
         }
+        if ($request->query('category')) {
+            $category = $request->query('category');
+            $recipes = $recipes->where('category', $category);
+        }
+        if ($request->query('meal_type')) {
+            $mealType = $request->query('meal_type');
+            $recipes = $recipes->where('meal_type', $mealType);
+        }
+        if ($request->query('temperature')) {
+            $mealType = $request->query('temperature');
+            $recipes = $recipes->where('temperature', $mealType);
+        }
+
         $recipes = $recipes->get();
         // 🧠 Match Logic
         $matchedRecipes = $recipes
