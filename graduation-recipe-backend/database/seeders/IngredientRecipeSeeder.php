@@ -170,7 +170,9 @@ class IngredientRecipeSeeder extends Seeder
                     'unit' => $row['unit'],
                     'ingredient_name_ar' => $row['ar'],
                     'display_text' => $row['qty'] . ' ' . $row['unit'] . ' ' . $row['name'],
-                    'sort_order' => $index
+                    'sort_order' => $index,
+                    'created_at' => now(),
+                    'updated_at' => now()
                 ];
             }
 
