@@ -144,6 +144,7 @@ class RecipeController extends Controller
                     'image' => $recipe->image,
                     'difficulty' => $recipe->difficulty,
                     'time' => $recipe->time,
+                    'category' => $recipe->category,
                     'calories' => $recipe->calories,
                     'steps' => json_decode($recipe->steps, true),
 
