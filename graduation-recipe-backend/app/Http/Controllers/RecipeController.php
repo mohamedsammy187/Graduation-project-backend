@@ -19,18 +19,25 @@ class RecipeController extends Controller
 
     public function index()
     {
-        $recipes = Recipe::with('ingredients')->paginate(12);
+        $recipes = Recipe::with('ingredients')->paginate(9);
 
         return response()->json([
-            'data' => $recipes->map(function ($recipe) {
+            'data' => $recipes->through(function ($recipe) {
                 return [
                     'id' => $recipe->id,
                     'title' => $recipe->title,
+                    'title_en' => $recipe->title_en,
+                    'title_ar' => $recipe->title_ar,
                     'slug' => $recipe->slug,
                     'time' => $recipe->time,
                     'difficulty' => $recipe->difficulty,
                     'calories' => $recipe->calories,
+                    'temperature' => $recipe->temperature,
                     'image' => $recipe->image,
+                    'servings' => $recipe->servings,
+                    'cuisine' => $recipe->cuisine,
+                    'description_en' => $recipe->description_en,
+                    'description_ar' => $recipe->description_ar,
                     'ingredients' => $recipe->ingredients->map(fn($i) => [
                         'id' => $i->id,
                         'name' => $i->name,
@@ -67,12 +74,23 @@ class RecipeController extends Controller
 
     public function showrecipe($slug)
     {
-        $recipe = Recipe::with('ingredients')->where('slug', $slug)->first();
+        $lang = app()->getLocale();
+        $recipe = Recipe::with('ingredients')->where('slug', $slug)->firstOrFail();
 
         if (!$recipe) {
             return response()->json(['message' => 'Recipe not found'], 404);
         }
-        return $recipe;
+        return response()->json([
+            'title' => $lang == 'ar' ? $recipe->title_ar : $recipe->title_en,
+            'description' => $lang == 'ar' ? $recipe->description_ar : $recipe->description_en,
+            'time' => $recipe->time,
+            'difficulty' => $recipe->difficulty,
+            'calories' => $recipe->calories,
+            'steps' => json_decode($recipe->steps),
+            'ingredients' => $recipe->ingredients->map(fn($i) => [
+                'name' => $lang == 'ar' ? $i->name_ar : $i->name_en
+            ])
+        ]);
     }
 
     public function store(Request $request)
