@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('difficulty');
             $table->string('calories');
             $table->longText('ingredients');      // store JSON
-            $table->longText('steps');            // store JSON
+            $table->json('steps')->nullable();            // store JSON
             $table->timestamps();                 // created_at and updated_at
         });
     }

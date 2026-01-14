@@ -7,11 +7,15 @@ use Illuminate\Http\Request;
 
 class IngredientController extends Controller
 {
-      public function index()
+    public function index(Request $request)
     {
-        // $ingredients = Ingredient::all();
-        // return response()->json($ingredients);
-        return Ingredient::orderBy('name')->pluck('name');
+        // اللغة الافتراضية إنجليزي
+        $lang = $request->get('lang', 'en');
+
+        // تحديد العمود حسب اللغة
+        $column = $lang === 'ar' ? 'name_ar' : 'name_en';
+
+        return Ingredient::orderBy($column)
+            ->pluck($column);
     }
 }
- 

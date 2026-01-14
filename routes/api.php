@@ -50,7 +50,7 @@ Route::middleware(SetLanguage::class)->group(function () {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum', 'lang')->group(function () {
+Route::middleware('auth:sanctum', SetLanguage::class)->group(function () {
     //pantry routes
     Route::get('/pantry', [PantryController::class, 'index']);
     Route::post('/pantry', [PantryController::class, 'store']);
@@ -107,7 +107,7 @@ Route::middleware(['auth:sanctum', 'CheckPass'])->group(function () {
     // Route::get('/getAll', [CategoryController::class, 'getAll']);
 });
 
-Route::middleware(['auth:sanctum', 'CheckPass', 'lang'])->group(function () {
+Route::middleware(['auth:sanctum', 'CheckPass', SetLanguage::class])->group(function () {
     Route::get('/getAll', [CategoryController::class, 'getAll']);
 });
 
