@@ -10,145 +10,145 @@ class IngredientRecipeSeeder extends Seeder
 {
     public function run(): void
     {
-        $ingredients = Ingredient::all()->keyBy('name');
+        $ingredients = Ingredient::all()->keyBy('name_en');
         $recipes = Recipe::all();
 
         // 🔥 Smart Recipe Ingredient Map (with quantities)
         $map = [
 
             'Pancakes' => [
-                ['name' => 'egg', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'بيض'],
-                ['name' => 'flour', 'qty' => 1, 'unit' => 'cup', 'ar' => 'دقيق'],
-                ['name' => 'milk', 'qty' => 1, 'unit' => 'cup', 'ar' => 'لبن'],
-                ['name' => 'sugar', 'qty' => 1, 'unit' => 'tbsp', 'ar' => 'سكر'],
+                ['name_en' => 'egg', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'بيض'],
+                ['name_en' => 'flour', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'دقيق'],
+                ['name_en' => 'milk', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'لبن'],
+                ['name_en' => 'sugar', 'qty' => 1, 'unit' => 'tbsp', 'name_ar' => 'سكر'],
             ],
 
             'Omelette' => [
-                ['name' => 'egg', 'qty' => 3, 'unit' => 'pcs', 'ar' => 'بيض'],
-                ['name' => 'butter', 'qty' => 1, 'unit' => 'tbsp', 'ar' => 'زبدة'],
-                ['name' => 'salt', 'qty' => 0.5, 'unit' => 'tsp', 'ar' => 'ملح'],
-                ['name' => 'pepper', 'qty' => 0.25, 'unit' => 'tsp', 'ar' => 'فلفل'],
+                ['name_en' => 'egg', 'qty' => 3, 'unit' => 'pcs', 'name_ar' => 'بيض'],
+                ['name_en' => 'butter', 'qty' => 1, 'unit' => 'tbsp', 'name_ar' => 'زبدة'],
+                ['name_en' => 'salt', 'qty' => 0.5, 'unit' => 'tsp', 'name_ar' => 'ملح'],
+                ['name_en' => 'pepper', 'qty' => 0.25, 'unit' => 'tsp', 'name_ar' => 'فلفل'],
             ],
 
             'French Toast' => [
-                ['name' => 'bread', 'qty' => 4, 'unit' => 'slices', 'ar' => 'عيش'],
-                ['name' => 'egg', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'بيض'],
-                ['name' => 'milk', 'qty' => 0.5, 'unit' => 'cup', 'ar' => 'لبن'],
-                ['name' => 'sugar', 'qty' => 1, 'unit' => 'tbsp', 'ar' => 'سكر'],
+                ['name_en' => 'bread', 'qty' => 4, 'unit' => 'slices', 'name_ar' => 'عيش'],
+                ['name_en' => 'egg', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'بيض'],
+                ['name_en' => 'milk', 'qty' => 0.5, 'unit' => 'cup', 'name_ar' => 'لبن'],
+                ['name_en' => 'sugar', 'qty' => 1, 'unit' => 'tbsp', 'name_ar' => 'سكر'],
             ],
 
             'Oats' => [
-                ['name' => 'oats', 'qty' => 1, 'unit' => 'cup', 'ar' => 'شوفان'],
-                ['name' => 'milk', 'qty' => 1, 'unit' => 'cup', 'ar' => 'لبن'],
-                ['name' => 'honey', 'qty' => 1, 'unit' => 'tbsp', 'ar' => 'عسل'],
+                ['name_en' => 'oats', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'شوفان'],
+                ['name_en' => 'milk', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'لبن'],
+                ['name_en' => 'honey', 'qty' => 1, 'unit' => 'tbsp', 'name_ar' => 'عسل'],
             ],
 
             'Grilled Chicken' => [
-                ['name' => 'chicken', 'qty' => 500, 'unit' => 'g', 'ar' => 'فراخ'],
-                ['name' => 'olive oil', 'qty' => 2, 'unit' => 'tbsp', 'ar' => 'زيت زيتون'],
-                ['name' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'ar' => 'ملح'],
-                ['name' => 'pepper', 'qty' => 0.5, 'unit' => 'tsp', 'ar' => 'فلفل'],
-                ['name' => 'herbs', 'qty' => 1, 'unit' => 'tbsp', 'ar' => 'أعشاب'],
+                ['name_en' => 'chicken', 'qty' => 500, 'unit' => 'g', 'name_ar' => 'فراخ'],
+                ['name_en' => 'olive oil', 'qty' => 2, 'unit' => 'tbsp', 'name_ar' => 'زيت زيتون'],
+                ['name_en' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'name_ar' => 'ملح'],
+                ['name_en' => 'pepper', 'qty' => 0.5, 'unit' => 'tsp', 'name_ar' => 'فلفل'],
+                ['name_en' => 'herbs', 'qty' => 1, 'unit' => 'tbsp', 'name_ar' => 'أعشاب'],
             ],
 
             'Pasta' => [
-                ['name' => 'pasta', 'qty' => 200, 'unit' => 'g', 'ar' => 'مكرونة'],
-                ['name' => 'chicken', 'qty' => 200, 'unit' => 'g', 'ar' => 'فراخ'],
-                ['name' => 'sauce', 'qty' => 1, 'unit' => 'cup', 'ar' => 'صلصة'],
-                ['name' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'ar' => 'ملح'],
-                ['name' => 'pepper', 'qty' => 0.5, 'unit' => 'tsp', 'ar' => 'فلفل'],
+                ['name_en' => 'pasta', 'qty' => 200, 'unit' => 'g', 'name_ar' => 'مكرونة'],
+                ['name_en' => 'chicken', 'qty' => 200, 'unit' => 'g', 'name_ar' => 'فراخ'],
+                ['name_en' => 'sauce', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'صلصة'],
+                ['name_en' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'name_ar' => 'ملح'],
+                ['name_en' => 'pepper', 'qty' => 0.5, 'unit' => 'tsp', 'name_ar' => 'فلفل'],
             ],
 
             'Burger' => [
-                ['name' => 'beef', 'qty' => 200, 'unit' => 'g', 'ar' => 'لحم'],
-                ['name' => 'bun', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'خبز'],
-                ['name' => 'cheese', 'qty' => 2, 'unit' => 'slices', 'ar' => 'جبنة'],
-                ['name' => 'lettuce', 'qty' => 1, 'unit' => 'cup', 'ar' => 'خس'],
-                ['name' => 'tomato', 'qty' => 1, 'unit' => 'pcs', 'ar' => 'طماطم'],
+                ['name_en' => 'beef', 'qty' => 200, 'unit' => 'g', 'name_ar' => 'لحم'],
+                ['name_en' => 'bun', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'خبز'],
+                ['name_en' => 'cheese', 'qty' => 2, 'unit' => 'slices', 'name_ar' => 'جبنة'],
+                ['name_en' => 'lettuce', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'خس'],
+                ['name_en' => 'tomato', 'qty' => 1, 'unit' => 'pcs', 'name_ar' => 'طماطم'],
             ],
 
             'Lemon Juice' => [
-                ['name' => 'lemon', 'qty' => 3, 'unit' => 'pcs', 'ar' => 'ليمون'],
-                ['name' => 'water', 'qty' => 2, 'unit' => 'cups', 'ar' => 'ماء'],
-                ['name' => 'sugar', 'qty' => 2, 'unit' => 'tbsp', 'ar' => 'سكر'],
+                ['name_en' => 'lemon', 'qty' => 3, 'unit' => 'pcs', 'name_ar' => 'ليمون'],
+                ['name_en' => 'water', 'qty' => 2, 'unit' => 'cups', 'name_ar' => 'ماء'],
+                ['name_en' => 'sugar', 'qty' => 2, 'unit' => 'tbsp', 'name_ar' => 'سكر'],
             ],
 
             'Smoothie' => [
-                ['name' => 'banana', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'موز'],
-                ['name' => 'milk', 'qty' => 1, 'unit' => 'cup', 'ar' => 'لبن'],
-                ['name' => 'yogurt', 'qty' => 0.5, 'unit' => 'cup', 'ar' => 'زبادي'],
-                ['name' => 'honey', 'qty' => 1, 'unit' => 'tbsp', 'ar' => 'عسل'],
+                ['name_en' => 'banana', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'موز'],
+                ['name_en' => 'milk', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'لبن'],
+                ['name_en' => 'yogurt', 'qty' => 0.5, 'unit' => 'cup', 'name_ar' => 'زبادي'],
+                ['name_en' => 'honey', 'qty' => 1, 'unit' => 'tbsp', 'name_ar' => 'عسل'],
             ],
 
             'Cookies' => [
-                ['name' => 'flour', 'qty' => 2, 'unit' => 'cups', 'ar' => 'دقيق'],
-                ['name' => 'egg', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'بيض'],
-                ['name' => 'butter', 'qty' => 100, 'unit' => 'g', 'ar' => 'زبدة'],
-                ['name' => 'sugar', 'qty' => 1, 'unit' => 'cup', 'ar' => 'سكر'],
-                ['name' => 'chocolate', 'qty' => 100, 'unit' => 'g', 'ar' => 'شوكولاتة'],
+                ['name_en' => 'flour', 'qty' => 2, 'unit' => 'cups', 'name_ar' => 'دقيق'],
+                ['name_en' => 'egg', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'بيض'],
+                ['name_en' => 'butter', 'qty' => 100, 'unit' => 'g', 'name_ar' => 'زبدة'],
+                ['name_en' => 'sugar', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'سكر'],
+                ['name_en' => 'chocolate', 'qty' => 100, 'unit' => 'g', 'name_ar' => 'شوكولاتة'],
             ],
             'Pizza' => [
-                ['name' => 'flour', 'qty' => 2, 'unit' => 'cups', 'ar' => 'دقيق'],
-                ['name' => 'cheese', 'qty' => 200, 'unit' => 'g', 'ar' => 'جبنة'],
-                ['name' => 'butter', 'qty' => 50, 'unit' => 'g', 'ar' => 'زبدة'],
-                ['name' => 'egg', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'بيض'],
-                ['name' => 'meat', 'qty' => 150, 'unit' => 'g', 'ar' => 'لحمة'],
+                ['name_en' => 'flour', 'qty' => 2, 'unit' => 'cups', 'name_ar' => 'دقيق'],
+                ['name_en' => 'cheese', 'qty' => 200, 'unit' => 'g', 'name_ar' => 'جبنة'],
+                ['name_en' => 'butter', 'qty' => 50, 'unit' => 'g', 'name_ar' => 'زبدة'],
+                ['name_en' => 'egg', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'بيض'],
+                ['name_en' => 'meat', 'qty' => 150, 'unit' => 'g', 'name_ar' => 'لحمة'],
             ],
 
             'Grilled Fish' => [
-                ['name' => 'fish', 'qty' => 1, 'unit' => 'kg', 'ar' => 'سمك'],
-                ['name' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'ar' => 'ملح'],
-                ['name' => 'pepper', 'qty' => 0.5, 'unit' => 'tsp', 'ar' => 'فلفل'],
-                ['name' => 'lemon', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'ليمون'],
-                ['name' => 'olive oil', 'qty' => 2, 'unit' => 'tbsp', 'ar' => 'زيت زيتون'],
+                ['name_en' => 'fish', 'qty' => 1, 'unit' => 'kg', 'name_ar' => 'سمك'],
+                ['name_en' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'name_ar' => 'ملح'],
+                ['name_en' => 'pepper', 'qty' => 0.5, 'unit' => 'tsp', 'name_ar' => 'فلفل'],
+                ['name_en' => 'lemon', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'ليمون'],
+                ['name_en' => 'olive oil', 'qty' => 2, 'unit' => 'tbsp', 'name_ar' => 'زيت زيتون'],
             ],
 
             'Fried Fish' => [
-                ['name' => 'fish', 'qty' => 1, 'unit' => 'kg', 'ar' => 'سمك'],
-                ['name' => 'flour', 'qty' => 1, 'unit' => 'cup', 'ar' => 'دقيق'],
-                ['name' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'ar' => 'ملح'],
-                ['name' => 'pepper', 'qty' => 0.5, 'unit' => 'tsp', 'ar' => 'فلفل'],
-                ['name' => 'oil', 'qty' => 2, 'unit' => 'cups', 'ar' => 'زيت'],
+                ['name_en' => 'fish', 'qty' => 1, 'unit' => 'kg', 'name_ar' => 'سمك'],
+                ['name_en' => 'flour', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'دقيق'],
+                ['name_en' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'name_ar' => 'ملح'],
+                ['name_en' => 'pepper', 'qty' => 0.5, 'unit' => 'tsp', 'name_ar' => 'فلفل'],
+                ['name_en' => 'oil', 'qty' => 2, 'unit' => 'cups', 'name_ar' => 'زيت'],
             ],
 
             'Shrimp Pasta' => [
-                ['name' => 'shrimp', 'qty' => 300, 'unit' => 'g', 'ar' => 'جمبري'],
-                ['name' => 'pasta', 'qty' => 250, 'unit' => 'g', 'ar' => 'مكرونة'],
-                ['name' => 'garlic', 'qty' => 3, 'unit' => 'cloves', 'ar' => 'ثوم'],
-                ['name' => 'olive oil', 'qty' => 2, 'unit' => 'tbsp', 'ar' => 'زيت زيتون'],
-                ['name' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'ar' => 'ملح'],
+                ['name_en' => 'shrimp', 'qty' => 300, 'unit' => 'g', 'name_ar' => 'جمبري'],
+                ['name_en' => 'pasta', 'qty' => 250, 'unit' => 'g', 'name_ar' => 'مكرونة'],
+                ['name_en' => 'garlic', 'qty' => 3, 'unit' => 'cloves', 'name_ar' => 'ثوم'],
+                ['name_en' => 'olive oil', 'qty' => 2, 'unit' => 'tbsp', 'name_ar' => 'زيت زيتون'],
+                ['name_en' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'name_ar' => 'ملح'],
             ],
 
             'Seafood Rice' => [
-                ['name' => 'rice', 'qty' => 2, 'unit' => 'cups', 'ar' => 'أرز'],
-                ['name' => 'shrimp', 'qty' => 200, 'unit' => 'g', 'ar' => 'جمبري'],
-                ['name' => 'fish', 'qty' => 200, 'unit' => 'g', 'ar' => 'سمك'],
-                ['name' => 'spices', 'qty' => 1, 'unit' => 'tbsp', 'ar' => 'بهارات'],
-                ['name' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'ar' => 'ملح'],
+                ['name_en' => 'rice', 'qty' => 2, 'unit' => 'cups', 'name_ar' => 'أرز'],
+                ['name_en' => 'shrimp', 'qty' => 200, 'unit' => 'g', 'name_ar' => 'جمبري'],
+                ['name_en' => 'fish', 'qty' => 200, 'unit' => 'g', 'name_ar' => 'سمك'],
+                ['name_en' => 'spices', 'qty' => 1, 'unit' => 'tbsp', 'name_ar' => 'بهارات'],
+                ['name_en' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'name_ar' => 'ملح'],
             ],
 
             'Tuna Salad' => [
-                ['name' => 'tuna', 'qty' => 200, 'unit' => 'g', 'ar' => 'تونة'],
-                ['name' => 'lettuce', 'qty' => 2, 'unit' => 'cups', 'ar' => 'خس'],
-                ['name' => 'tomato', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'طماطم'],
-                ['name' => 'olive oil', 'qty' => 2, 'unit' => 'tbsp', 'ar' => 'زيت زيتون'],
-                ['name' => 'lemon', 'qty' => 1, 'unit' => 'pcs', 'ar' => 'ليمون'],
+                ['name_en' => 'tuna', 'qty' => 200, 'unit' => 'g', 'name_ar' => 'تونة'],
+                ['name_en' => 'lettuce', 'qty' => 2, 'unit' => 'cups', 'name_ar' => 'خس'],
+                ['name_en' => 'tomato', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'طماطم'],
+                ['name_en' => 'olive oil', 'qty' => 2, 'unit' => 'tbsp', 'name_ar' => 'زيت زيتون'],
+                ['name_en' => 'lemon', 'qty' => 1, 'unit' => 'pcs', 'name_ar' => 'ليمون'],
             ],
 
             'Shrimp Soup' => [
-                ['name' => 'shrimp', 'qty' => 300, 'unit' => 'g', 'ar' => 'جمبري'],
-                ['name' => 'onion', 'qty' => 1, 'unit' => 'pcs', 'ar' => 'بصل'],
-                ['name' => 'garlic', 'qty' => 3, 'unit' => 'cloves', 'ar' => 'ثوم'],
-                ['name' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'ar' => 'ملح'],
-                ['name' => 'water', 'qty' => 4, 'unit' => 'cups', 'ar' => 'ماء'],
+                ['name_en' => 'shrimp', 'qty' => 300, 'unit' => 'g', 'name_ar' => 'جمبري'],
+                ['name_en' => 'onion', 'qty' => 1, 'unit' => 'pcs', 'name_ar' => 'بصل'],
+                ['name_en' => 'garlic', 'qty' => 3, 'unit' => 'cloves', 'name_ar' => 'ثوم'],
+                ['name_en' => 'salt', 'qty' => 1, 'unit' => 'tsp', 'name_ar' => 'ملح'],
+                ['name_en' => 'water', 'qty' => 4, 'unit' => 'cups', 'name_ar' => 'ماء'],
             ],
 
             'Fish Sandwich' => [
-                ['name' => 'fish', 'qty' => 200, 'unit' => 'g', 'ar' => 'سمك'],
-                ['name' => 'bun', 'qty' => 2, 'unit' => 'pcs', 'ar' => 'عيش'],
-                ['name' => 'lettuce', 'qty' => 1, 'unit' => 'cup', 'ar' => 'خس'],
-                ['name' => 'tomato', 'qty' => 1, 'unit' => 'pcs', 'ar' => 'طماطم'],
-                ['name' => 'sauce', 'qty' => 2, 'unit' => 'tbsp', 'ar' => 'صوص'],
+                ['name_en' => 'fish', 'qty' => 200, 'unit' => 'g', 'name_ar' => 'سمك'],
+                ['name_en' => 'bun', 'qty' => 2, 'unit' => 'pcs', 'name_ar' => 'عيش'],
+                ['name_en' => 'lettuce', 'qty' => 1, 'unit' => 'cup', 'name_ar' => 'خس'],
+                ['name_en' => 'tomato', 'qty' => 1, 'unit' => 'pcs', 'name_ar' => 'طماطم'],
+                ['name_en' => 'sauce', 'qty' => 2, 'unit' => 'tbsp', 'name_ar' => 'صوص'],
             ],
 
         ];
@@ -162,14 +162,14 @@ class IngredientRecipeSeeder extends Seeder
             foreach ($map[$recipe->title] as $index => $row) {
 
                 $ingredient = Ingredient::firstOrCreate([
-                    'name' => strtolower($row['name'])
+                    'name_en' => strtolower($row['name_en'])
                 ]);
 
                 $syncData[$ingredient->id] = [
                     'quantity' => $row['qty'],
                     'unit' => $row['unit'],
-                    'ingredient_name_ar' => $row['ar'],
-                    'display_text' => $row['qty'] . ' ' . $row['unit'] . ' ' . $row['name'],
+                    'ingredient_name_ar' => $row['name_ar'],
+                    'display_text' => $row['qty'] . ' ' . $row['unit'] . ' ' . $row['name_en'],
                     'sort_order' => $index,
                     'created_at' => now(),
                     'updated_at' => now()

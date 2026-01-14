@@ -23,7 +23,7 @@ class Recipe extends Model
         'calories'
     ];
 
-    
+
     public function ingredients()
     {
         return $this->belongsToMany(Ingredient::class, 'ingredient_recipe')
@@ -95,5 +95,30 @@ class Recipe extends Model
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+    public function getTitleAttribute()
+    {
+        logger('TITLE ACCESSOR', [
+            'locale' => app()->getLocale(),
+            'ar' => $this->title_ar,
+            'en' => $this->title_en,
+        ]);
+
+        return app()->getLocale() === 'ar'
+            ? ($this->title_ar ?? $this->title_en)
+            : ($this->title_en ?? $this->title_ar);
+    }
+
+    public function getDescriptionAttribute()
+    {
+        logger('TITLE ACCESSOR', [
+            'locale' => app()->getLocale(),
+            'ar' => $this->title_ar,
+            'en' => $this->title_en,
+        ]);
+        return app()->getLocale() === 'ar'
+            ? ($this->description_ar ?? $this->description_en)
+            : ($this->description_en ?? $this->description_ar);
     }
 }

@@ -68,7 +68,7 @@ class IngredientSeeder extends Seeder
 
         foreach ($ingredients as $i) {
             Ingredient::firstOrCreate(
-                ['name' => $i[0]],
+                // ['name' => $i[0]],
                 [
                     'name_en' => $i[0],
                     'name_ar' => $i[1],

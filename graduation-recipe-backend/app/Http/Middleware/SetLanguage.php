@@ -15,8 +15,14 @@ class SetLanguage
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $lang = $request->header('Accept-Language' , 'en');
-        app()->setlocale($lang == 'ar' ? 'ar' : 'en');
+        $lang = $request->header('Accept-Language', 'en');
+        // app()->setlocale($lang == 'ar' ? 'ar' : 'en');
+
+        if (str_starts_with($lang, 'ar')) {
+            app()->setLocale('ar');
+        } else {
+            app()->setLocale('en');
+        }
         return $next($request);
     }
 }

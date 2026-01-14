@@ -14,34 +14,43 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LLMController;
 use App\Http\Controllers\FavoriteController;
 use Illuminate\Http\Request;
+use App\Http\Middleware\SetLanguage;
+
+
 
 // Route::get('/test', function () {
-//     return response()->json(['message' => 'Welcome to the API']);
-// });
+    //     return response()->json(['message' => 'Welcome to the API']);
+    // });
+    
+    // Recipe Routes***( 2 . second sprint)***
+    
+    
+    // Recipe Routes***( 1 .first sprint)***
+    Route::get('/test', [RecipeController::class, 'test']);
+    
+Route::middleware(SetLanguage::class)->group(function () {
+    //search
+    Route::match(['get', 'post'], '/recipes/search', [RecipeSearchController::class, 'search']);
+    Route::get('/ingredients', [IngredientController::class, 'index']);
+    
+    Route::get('/recipes', [RecipeController::class, 'index']);
+    Route::get('/recipes/{id}', [RecipeController::class, 'show'])->whereNumber('id');
+    Route::get('/recipes/slug/{slug}', [RecipeController::class, 'showrecipe']);
+    Route::post('/recipes', [RecipeController::class, 'store']);
+    
+    //simple chat route 
+    Route::post('/chat', [ChatController::class, 'handle']);
+    
+});
 
-// Recipe Routes***( 2 . second sprint)***
 
-
-// Recipe Routes***( 1 .first sprint)***
-Route::get('/test', [RecipeController::class, 'test']);
-//search
-Route::match(['get', 'post'], '/recipes/search', [RecipeSearchController::class, 'search']);
-Route::get('/ingredients', [IngredientController::class, 'index']);
-
-Route::get('/recipes', [RecipeController::class, 'index']);
-Route::get('/recipes/{id}', [RecipeController::class, 'show'])->whereNumber('id');
-Route::get('/recipes/slug/{slug}', [RecipeController::class, 'showrecipe']);
-Route::post('/recipes', [RecipeController::class, 'store']);
-
-//simple chat route 
-Route::post('/chat', [ChatController::class, 'handle']);
 
 
 // Auth Routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum', 'lang')->group(function () {
     //pantry routes
     Route::get('/pantry', [PantryController::class, 'index']);
     Route::post('/pantry', [PantryController::class, 'store']);
@@ -75,36 +84,6 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['user' => $request->user()]);
     });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

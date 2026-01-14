@@ -22,13 +22,13 @@ class PantrySeeder extends Seeder
         PantryItem::create([
             'user_id' => 1,
             'item_name' => 'Rice',
-            'ingredient_id' => 1,
+            'ingredient_id' => 2,
             'added_date' => now(),
         ]);
         PantryItem::create([
             'user_id' => 1,
             'item_name' => 'Salt',
-            'ingredient_id' => 1,
+            'ingredient_id' => 3,
             'added_date' => now(),
         ]);
     }

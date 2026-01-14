@@ -16,69 +16,63 @@ class RecipeController extends Controller
     }
 
 
+    private function getLocalizedRecipe(Recipe $recipe)
+    {
+        $lang = app()->getLocale();
+
+        return [
+            'id' => $recipe->id,
+            'title' => $recipe->title,
+            'slug' => $recipe->slug,
+            'time' => $recipe->time,
+            'difficulty' => $recipe->difficulty,
+            'calories' => $recipe->calories,
+            'temperature' => $recipe->temperature,
+            'image' => $recipe->image,
+            'servings' => $recipe->servings,
+            'cuisine' => $recipe->cuisine,
+            'description' => $recipe->description,
+
+            'ingredients' => $recipe->ingredients->map(fn($i) => [
+                'id' => $i->id,
+                'name' => $i->name,
+            ]),
+
+            'steps' => json_decode($recipe->steps, true),
+        ];
+    }
+
 
     public function index()
     {
-        $lang = app()->getLocale(); // ar or en
-
         $recipes = Recipe::with('ingredients')->paginate(9);
 
-        $recipes->through(function ($recipe) use ($lang) {
-            return [
-                'id' => $recipe->id,
-                'title' => $lang == 'ar' ? $recipe->title_ar : $recipe->title_en,
-                'slug' => $recipe->slug,
-                'time' => $recipe->time,
-                'difficulty' => $recipe->difficulty,
-                'calories' => $recipe->calories,
-                'temperature' => $recipe->temperature,
-                'image' => $recipe->image,
-                'servings' => $recipe->servings,
-                'cuisine' => $recipe->cuisine,
-                'description' => $lang == 'ar' ? $recipe->description_ar : $recipe->description_en,
-
-                'ingredients' => $recipe->ingredients->map(fn($i) => [
-                    'id' => $i->id,
-                    'name' => $lang == 'ar' ? $i->name_ar : $i->name_en,
-                    'quantity' => $i->pivot->quantity,
-                    'unit' => $i->pivot->unit,
-                ]),
-
-                'steps' => json_decode($recipe->steps, true),
-            ];
-        });
-
-        return response()->json($recipes);
+        return response()->json([
+            'data' => $recipes->through(
+                fn($recipe) =>
+                $this->getLocalizedRecipe($recipe)
+            ),
+            'meta' => [
+                'current_page' => $recipes->currentPage(),
+                'last_page' => $recipes->lastPage(),
+                'per_page' => $recipes->perPage(),
+                'total' => $recipes->total(),
+            ],
+        ]);
     }
+
 
 
 
     public function show($id)
     {
-        $lang = app()->getLocale();
-
         $recipe = Recipe::with('ingredients')->findOrFail($id);
 
-        return response()->json([
-            'id' => $recipe->id,
-            'title' => $lang == 'ar' ? $recipe->title_ar : $recipe->title_en,
-            'slug' => $recipe->slug,
-            'time' => $recipe->time,
-            'difficulty' => $recipe->difficulty,
-            'calories' => $recipe->calories,
-            'image' => $recipe->image,
-            'description' => $lang == 'ar' ? $recipe->description_ar : $recipe->description_en,
-
-            'ingredients' => $recipe->ingredients->map(fn($i) => [
-                'id' => $i->id,
-                'name' => $lang == 'ar' ? $i->name_ar : $i->name_en,
-                'quantity' => $i->pivot->quantity,
-                'unit' => $i->pivot->unit,
-            ]),
-
-            'steps' => json_decode($recipe->steps, true),
-        ]);
+        return response()->json(
+            $this->getLocalizedRecipe($recipe)
+        );
     }
+
 
 
 
@@ -86,29 +80,15 @@ class RecipeController extends Controller
 
     public function showrecipe($slug)
     {
-        $lang = app()->getLocale();
+        $recipe = Recipe::with('ingredients')
+            ->where('slug', $slug)
+            ->firstOrFail();
 
-        $recipe = Recipe::with('ingredients')->where('slug', $slug)->firstOrFail();
-
-        return response()->json([
-            'id' => $recipe->id,
-            'title' => $lang == 'ar' ? $recipe->title_ar : $recipe->title_en,
-            'description' => $lang == 'ar' ? $recipe->description_ar : $recipe->description_en,
-            'time' => $recipe->time,
-            'difficulty' => $recipe->difficulty,
-            'calories' => $recipe->calories,
-            'image' => $recipe->image,
-
-            'steps' => json_decode($recipe->steps),
-
-            'ingredients' => $recipe->ingredients->map(fn($i) => [
-                'id' => $i->id,
-                'name' => $lang == 'ar' ? $i->name_ar : $i->name_en,
-                'quantity' => $i->pivot->quantity,
-                'unit' => $i->pivot->unit,
-            ])
-        ]);
+        return response()->json(
+            $this->getLocalizedRecipe($recipe)
+        );
     }
+
 
 
     public function store(Request $request)

@@ -401,7 +401,7 @@ class RecipeSeeder extends Seeder
         foreach ($recipes as $data) {
 
             $recipe = Recipe::create([
-                'title' => $data['title_en'],
+                // 'title' => $data['title_en'],
                 'title_en' => $data['title_en'],
                 'title_ar' => $data['title_ar'],
                 'category' => $data['category'],
@@ -420,7 +420,7 @@ class RecipeSeeder extends Seeder
                 'description_ar' => $data['description_ar'],
             ]);
 
-            $ingredientIds = Ingredient::whereIn('name', $data['ingredients'])->pluck('id');
+            $ingredientIds = Ingredient::whereIn('name_en', $data['ingredients'])->pluck('id');
             $recipe->ingredients()->sync($ingredientIds);
         }
     }
