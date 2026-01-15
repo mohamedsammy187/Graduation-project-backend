@@ -13,6 +13,7 @@ use App\Http\Controllers\ShoppingListController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LLMController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\Admmin\RecipeAdminController;
 use Illuminate\Http\Request;
 use App\Http\Middleware\SetLanguage;
 
@@ -22,10 +23,17 @@ use App\Http\Middleware\SetLanguage;
     //     return response()->json(['message' => 'Welcome to the API']);
     // });
     
-    // Recipe Routes***( 2 . second sprint)***
+    // Recipe Routes***( 2.Admint)***
+    Route::middleware(['auth::sanctum', 'admin'])->prefix('admin')->group(function () {
+        Route::get('/recipes', [RecipeAdminController::class, 'index']);
+        Route::get('/recipes/{id}', [RecipeAdminController::class, 'show'])->whereNumber('id');
+        Route::post('/recipes', [RecipeAdminController::class, 'store']);
+        Route::put('/recipes/{id}', [RecipeAdminController::class, 'update'])->whereNumber('id');
+        Route::delete('/recipes/{id}', [RecipeAdminController::class, 'destroy'])->whereNumber('id');
+    });
     
     
-    // Recipe Routes***( 1 .first sprint)***
+    // Recipe Routes***( 1. users)***
     Route::get('/test', [RecipeController::class, 'test']);
     
 Route::middleware(SetLanguage::class)->group(function () {

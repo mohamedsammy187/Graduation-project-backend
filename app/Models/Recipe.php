@@ -12,15 +12,21 @@ use Illuminate\Support\Str;
 class Recipe extends Model
 {
     protected $fillable = [
-        'title',
+        'title_en',
+        'title_ar',
         'slug',
         'image',
         'category',
         'meal_type',
         'temperature',
+        'description_en',
+        'description_ar',
+        'ingredients',
+        'steps',
         'time',
         'difficulty',
-        'calories'
+        'calories', 
+        'servings'
     ];
 
 

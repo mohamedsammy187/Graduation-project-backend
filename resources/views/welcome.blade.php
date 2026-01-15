@@ -90,15 +90,25 @@
         http://127.0.0.1:8000/api/recipes/match-pantry
     </p>
     <p>
-    POST or GET   http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette
-    POST or GET   http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt
-    POST or GET    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal
-    POST or GET    http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal&meal_type=breakfast&temperature=hot
+        POST or GET http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette
+        POST or GET http://127.0.0.1:8000/api/recipes/search?GET /api/recipes/search?q=omelette&ingredients=egg,salt
+        POST or GET http://127.0.0.1:8000/api/recipes/search?GET
+        /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal
+        POST or GET http://127.0.0.1:8000/api/recipes/search?GET
+        /api/recipes/search?q=omelette&ingredients=egg,salt&category=meal&meal_type=breakfast&temperature=hot
 
     </p>
     <p>
-        //surprise me accept token only 
+        //surprise me accept token only
         GET http://127.0.0.1:8000/api/recipes/surprise-me wire
+    </p>
+    <p>
+        Method Endpoint Admin Recipe Management
+        GET http://127.0.0.1:8000/api/admin/recipes List recipes
+        POST http://127.0.0.1:8000/api/admin/recipes Create bilingual recipe
+        GET http://127.0.0.1:8000/api/admin/recipes/{id} View recipe
+        PUT http://127.0.0.1:8000/api/admin/recipes/{id} Update recipe
+        DELETE http://127.0.0.1:8000/api/admin/recipes/{id} Delete recipe
     </p>
     </p>
 </body>

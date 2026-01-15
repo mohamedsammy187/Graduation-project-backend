@@ -15,6 +15,10 @@ class Kernel extends HttpKernel
 
     // Middleware groups
     protected $middlewareGroups = [
+        'admin' => [
+            \App\Http\Middleware\AdminMiddleware::class,
+            'auth',
+        ],
         'web' => [
             // add web-related middleware if needed
         ],
