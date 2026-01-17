@@ -124,6 +124,12 @@
         Route::get('/recipes/top-loved', [RecipeController::class, 'topLoved']);
         GET http://127.0.0.1:8000/api/recipes/top-loved
     </p>
+    <p>
+        Route::get('/recipes', [RecipeAdminController::class, 'index']);
+        Route::post('/recipes', [RecipeAdminController::class, 'store']);
+        Route::put('/recipes/{id}', [RecipeAdminController::class, 'update']);
+        Route::delete('/recipes/{id}', [RecipeAdminController::class, 'destroy']);
+    </p>
     </p>
 </body>
 

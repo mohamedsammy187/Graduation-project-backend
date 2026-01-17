@@ -31,9 +31,10 @@ class Kernel extends HttpKernel
         'auth'     => \App\Http\Middleware\Authenticate::class,
         'lang'     => \App\Http\Middleware\SetLanguage::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+
+
         'is_admin' => \App\Http\Middleware\IsAdmin::class,
         'test'     => \App\Http\Middleware\TestingMiddleware::class,
-
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
     ];
 }
