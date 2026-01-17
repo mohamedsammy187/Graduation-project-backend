@@ -58,7 +58,10 @@ Route::middleware('auth:sanctum', SetLanguage::class)->group(function () {
     //favorite routes
     Route::get('/favorites', [FavoriteController::class, 'index']);
     Route::post('/favorites', [FavoriteController::class, 'store']);
+    
     Route::delete('/favorites/{recipe_id}', [FavoriteController::class, 'destroy']);
+    //top-loved
+    Route::get('/recipes/top-loved', [RecipeController::class, 'topLoved']);
 
     //shopping list routes
     Route::get('/shopping-list', [ShoppingListController::class, 'index']);
@@ -108,7 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
-    /*
+/*
     |--------------------------------------------------------------------------
     | Admin Routes
     |--------------------------------------------------------------------------
@@ -117,22 +120,22 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['test'])->get('/middleware-test', function () {
     return response()->json(['ok' => true]);
 });
-    Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
 
-    Route::get('/admin/recipes', [RecipeAdminController::class, 'index']);
+    // Route::get('/admin/recipes', [RecipeAdminController::class, 'index']);
 
 });
 
 
 
-// Route::middleware(['auth:sanctum', 'admin'])
-//     ->prefix('admin')
-//     ->group(function () {
-//         Route::get('/recipes', [RecipeAdminController::class, 'index']);
-//         Route::post('/recipes', [RecipeAdminController::class, 'store']);
-//         Route::put('/recipes/{id}', [RecipeAdminController::class, 'update']);
-//         Route::delete('/recipes/{id}', [RecipeAdminController::class, 'destroy']);
-//     });
+Route::middleware(['auth:sanctum', 'admin'])
+    ->prefix('admin')
+    ->group(function () {
+        Route::get('/recipes', [RecipeAdminController::class, 'index']);
+        Route::post('/recipes', [RecipeAdminController::class, 'store']);
+        Route::put('/recipes/{id}', [RecipeAdminController::class, 'update']);
+        Route::delete('/recipes/{id}', [RecipeAdminController::class, 'destroy']);
+    });
 
 
 

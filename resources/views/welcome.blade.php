@@ -111,11 +111,18 @@
         DELETE http://127.0.0.1:8000/api/admin/recipes/{id} Delete recipe
     </p>
     <p>
+        GET http://127.0.0.1:8000/api/pantry/lang
         Route::get('/pantry/lang', [PantryController::class, 'indexWithLang']);
+        
+        DELETE http://127.0.0.1:8000/api/pantry/{id}/sync
         Route::delete('/pantry/{id}/sync', [PantryController::class, 'destroyAndSync']);
-
+        
+        GET http://127.0.0.1:8000/api/shopping-list/lang
         Route::get('/shopping-list/lang', [ShoppingListController::class, 'indexWithLang']);
-
+    </p>
+    <p>
+        Route::get('/recipes/top-loved', [RecipeController::class, 'topLoved']);
+        GET http://127.0.0.1:8000/api/recipes/top-loved
     </p>
     </p>
 </body>

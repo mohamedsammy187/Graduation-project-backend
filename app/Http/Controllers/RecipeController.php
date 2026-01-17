@@ -7,6 +7,7 @@ use App\Models\Recipe;
 use Illuminate\Http\Request;
 use App\Models\PantryItem;
 use App\Models\ShoppingItem;
+use Illuminate\Support\Facades\DB;
 
 class RecipeController extends Controller
 {
@@ -305,6 +306,40 @@ class RecipeController extends Controller
                 // ✅ deployment-safe link
                 'link' => rtrim(config('app.url'), '/') . "/api/recipes/slug/{$recipe->slug}",
             ]
+        ]);
+    }
+
+
+    public function topLoved()
+    {
+        $lang = app()->getLocale();
+
+        $recipes = Recipe::select(
+            'recipes.id',
+            'recipes.slug',
+            'recipes.image',
+            DB::raw('COUNT(favorites.id) as loves_count')
+        )
+            ->join('favorites', 'favorites.recipe_id', '=', 'recipes.id')
+            ->groupBy('recipes.id', 'recipes.slug', 'recipes.image')
+            ->orderByDesc('loves_count')
+            ->limit(3)
+            ->get()
+            ->map(function ($recipe) use ($lang) {
+                return [
+                    'id' => $recipe->id,
+                    'slug' => $recipe->slug,
+                    'title' => $lang === 'ar'
+                        ? $recipe->title_ar
+                        : $recipe->title_en,
+                    'image' => $recipe->image,
+                    'loves' => $recipe->loves_count
+                ];
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $recipes
         ]);
     }
 }
