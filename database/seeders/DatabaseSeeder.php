@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
         // \App\Models\Recipe::factory(10)->create();
         $this->call([
             UserSeeder::class,
+            AdminSeeder::class,
             IngredientSeeder::class,
             RecipeSeeder::class,
             PantrySeeder::class,

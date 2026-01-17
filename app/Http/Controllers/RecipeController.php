@@ -18,7 +18,8 @@ class RecipeController extends Controller
 
     private function getLocalizedRecipe(Recipe $recipe)
     {
-        $lang = app()->getLocale();
+        // $lang = app()->getLocale();
+        $lang = request()->get('lang', 'en');
         $steps = json_decode($recipe->steps, true);
 
         return [
@@ -37,6 +38,10 @@ class RecipeController extends Controller
             'ingredients' => $recipe->ingredients->map(fn($i) => [
                 'id' => $i->id,
                 'name' => $i->name,
+                'quantity' => $i->pivot->quantity,
+                'unit' => $i->pivot->unit,
+                'display_text' => $i->pivot->display_text,
+                'is_optional' => $i->pivot->is_optional,
             ]),
 
             'steps' => $steps[$lang] ?? $steps['en'],

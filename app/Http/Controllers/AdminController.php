@@ -1,48 +1,59 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
+use App\Models\Recipe;
 use Illuminate\Http\Request;
-use App\Models\Product;
-use App\Models\Category;
-use App\Models\User;
-use PHPUnit\Metadata\Uses;
 
-class AdminController extends Controller
+class RecipeAdminController extends Controller
 {
     public function index()
     {
-        $latestUsers = getLatest('*', 'users', 'id');
-        // $latestItems = getLatest('*', 'categories', 'id');
-        $latestItems = Category::orderBy('id', 'DESC')
-            ->take(5)
-            ->get();
-
-
-        $usersCount = countItems('id', 'users');
-        $productsCount = countItems('id', 'products');
-        $categoriesCount = countItems('id', 'categories');
-
-        return view('admin.dashboard', compact(
-            'latestUsers',
-            'latestItems',
-            'usersCount',
-            'productsCount',
-            'categoriesCount'
-        ));
+        return Recipe::all();
     }
-    // public function index()
-    // {
-    //     return view('admin.dashboard', [
-    //         'productsCount' => Product::count(),
-    //         'categoriesCount' => Category::count(),
-    //         'usersCount' => User::count(),
-    //     ]);
-    // }
 
-    public function productsTable()
+    public function store(Request $request)
     {
-        $products = Product::all(); // ✅ send all rows
-        return view('admin.products', ['products' => $products]);
+        $validated = $request->validate([
+            'title_en' => 'required|string',
+            'title_ar' => 'required|string',
+            'description_en' => 'nullable|string',
+            'description_ar' => 'nullable|string',
+        ]);
+
+        $recipe = Recipe::create($validated);
+
+        return response()->json($recipe, 201);
+    }
+
+    public function show($id)
+    {
+        return Recipe::findOrFail($id);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $recipe = Recipe::findOrFail($id);
+
+        $validated = $request->validate([
+            'title_en' => 'sometimes|string',
+            'title_ar' => 'sometimes|string',
+            'description_en' => 'nullable|string',
+            'description_ar' => 'nullable|string',
+        ]);
+
+        $recipe->update($validated);
+
+        return response()->json($recipe);
+    }
+
+    public function destroy($id)
+    {
+        Recipe::findOrFail($id)->delete();
+
+        return response()->json([
+            'message' => 'Recipe deleted'
+        ]);
     }
 }

@@ -156,4 +156,28 @@ class ShoppingListController extends Controller
             'message' => 'Ready to migrate to shopping service'
         ]);
     }
+
+    public function indexWithLang(Request $request)
+    {
+        $lang = app()->getLocale();
+        $user = $request->user();
+
+        $items = ShoppingItem::where('user_id', $user->id)->get();
+
+        $data = $items->map(function ($item) use ($lang) {
+            return [
+                'id' => $item->id,
+                'item_name' => $item->item_name,
+                'is_checked' => $item->is_checked,
+                'display_name' => $lang === 'ar'
+                    ? optional($item->ingredient)->name_ar ?? $item->item_name
+                    : optional($item->ingredient)->name_en ?? $item->item_name
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
 }

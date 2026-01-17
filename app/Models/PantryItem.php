@@ -12,4 +12,9 @@ class PantryItem extends Model
         'ingredient_id',
         'added_date'
     ];
+
+    public function ingredients()
+    {
+        return $this->belongsTo(Ingredient::class, 'ingredient_id');
+    }
 }

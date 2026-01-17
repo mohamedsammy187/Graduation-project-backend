@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Admmin;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Recipe;
+use Illuminate\Http\Request;
 
 class RecipeAdminController extends Controller
 {
     public function index()
     {
-        $recipes = Recipe::all();
-        return response()->json($recipes);
+        return Recipe::all();
     }
 
     public function store(Request $request)
@@ -19,13 +18,18 @@ class RecipeAdminController extends Controller
         $validated = $request->validate([
             'title_en' => 'required|string',
             'title_ar' => 'required|string',
-            'description_en' => 'required|string',
-            'description_ar' => 'required|string',
+            'description_en' => 'nullable|string',
+            'description_ar' => 'nullable|string',
         ]);
 
-
         $recipe = Recipe::create($validated);
+
         return response()->json($recipe, 201);
+    }
+
+    public function show($id)
+    {
+        return Recipe::findOrFail($id);
     }
 
     public function update(Request $request, $id)
@@ -47,6 +51,9 @@ class RecipeAdminController extends Controller
     public function destroy($id)
     {
         Recipe::findOrFail($id)->delete();
-        return response()->json(['message' => 'Recipe deleted successfully.']);
+
+        return response()->json([
+            'message' => 'Recipe deleted'
+        ]);
     }
 }

@@ -110,6 +110,13 @@
         PUT http://127.0.0.1:8000/api/admin/recipes/{id} Update recipe
         DELETE http://127.0.0.1:8000/api/admin/recipes/{id} Delete recipe
     </p>
+    <p>
+        Route::get('/pantry/lang', [PantryController::class, 'indexWithLang']);
+        Route::delete('/pantry/{id}/sync', [PantryController::class, 'destroyAndSync']);
+
+        Route::get('/shopping-list/lang', [ShoppingListController::class, 'indexWithLang']);
+
+    </p>
     </p>
 </body>
 

@@ -24,6 +24,8 @@ class Recipe extends Model
         'ingredients',
         'steps',
         'time',
+        'quantity',
+        'unit',
         'difficulty',
         'calories', 
         'servings'

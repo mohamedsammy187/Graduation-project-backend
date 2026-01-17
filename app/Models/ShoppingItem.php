@@ -15,5 +15,10 @@ class ShoppingItem extends Model
     public function recipe()
     {
         return $this->belongsTo(Recipe::class, 'source_recipe_id');
-    }   
+    }
+    
+    public function ingredient()
+    {
+        return $this->belongsTo(Ingredient::class, 'ingredient_id');
+    }
 }

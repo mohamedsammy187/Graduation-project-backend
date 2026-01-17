@@ -12,15 +12,15 @@ class verifyToken
 {
     public function handle(Request $request, Closure $next)
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-        } catch (TokenInvalidException $e) {
-            return response()->json(['msg' => 'Token is invalid'], 401);
-        } catch (TokenExpiredException $e) {
-            return response()->json(['msg' => 'Token has expired'], 401);
-        } catch (\Exception $e) {
-            return response()->json(['msg' => 'Authorization Token not found'], 401);
-        }
+        // try {
+        //     $user = JWTAuth::parseToken()->authenticate();
+        // } catch (TokenInvalidException $e) {
+        //     return response()->json(['msg' => 'Token is invalid'], 401);
+        // } catch (TokenExpiredException $e) {
+        //     return response()->json(['msg' => 'Token has expired'], 401);
+        // } catch (\Exception $e) {
+        //     return response()->json(['msg' => 'Authorization Token not found'], 401);
+        // }
 
         return $next($request);
     }

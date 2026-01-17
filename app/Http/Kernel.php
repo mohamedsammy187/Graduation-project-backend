@@ -3,46 +3,37 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use App\Http\Middleware\Authenticate;
 
 class Kernel extends HttpKernel
 {
-    // Global middleware
     protected $middleware = [
-        // leave empty or add only necessary global middleware
+        \Illuminate\Http\Middleware\TrustProxies::class,
+        \Illuminate\Http\Middleware\HandleCors::class,
+        \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
+        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
     ];
 
-    // Middleware groups
     protected $middlewareGroups = [
-        'admin' => [
-            \App\Http\Middleware\AdminMiddleware::class,
-            'auth',
-        ],
+
         'web' => [
-            // add web-related middleware if needed
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
         'api' => [
-            \App\Http\Middleware\SetLanguage::class,
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            'bindings',
         ],
     ];
 
     protected $routeMiddleware = [
-        'test' => \App\Http\Middleware\TestMiddleware::class,
-        'CheckPass' => \App\Http\Middleware\CheckPass::class,
-        'lang' => \App\Http\Middleware\LangSwitcher::class,
-        'auth' => \App\Http\Middleware\Authenticate::class,
-        'auth:sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        // 'jwt.verify' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class,
+        'auth'     => \App\Http\Middleware\Authenticate::class,
+        'lang'     => \App\Http\Middleware\SetLanguage::class,
+        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'is_admin' => \App\Http\Middleware\IsAdmin::class,
+        'test'     => \App\Http\Middleware\TestingMiddleware::class,
 
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
     ];
-    //     protected $routeMiddleware = [
-    //         'auth' => \App\Http\Middleware\Authenticate::class,
-    //         'lang' => \App\Http\Middleware\LangMiddleware::class,
-    //     ];
 }

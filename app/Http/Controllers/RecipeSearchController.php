@@ -40,7 +40,7 @@ public function search(Request $request)
             : $ingredients;
 
         $query->whereHas('ingredients', function ($q) use ($ings) {
-            $q->whereIn(DB::raw('LOWER(name)'), array_map('strtolower',$ings));
+            $q->whereIn(DB::raw('LOWER(name_en)'), array_map('strtolower',$ings));
 
         });
     }
