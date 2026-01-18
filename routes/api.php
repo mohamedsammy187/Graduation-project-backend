@@ -58,10 +58,9 @@ Route::middleware('auth:sanctum', SetLanguage::class)->group(function () {
     //favorite routes
     Route::get('/favorites', [FavoriteController::class, 'index']);
     Route::post('/favorites', [FavoriteController::class, 'store']);
-    
+
     Route::delete('/favorites/{recipe_id}', [FavoriteController::class, 'destroy']);
     //top-loved
-    Route::get('/recipes/top-loved', [RecipeController::class, 'topLoved']);
 
     //shopping list routes
     Route::get('/shopping-list', [ShoppingListController::class, 'index']);
@@ -198,3 +197,5 @@ Route::post('/uploadimage', [ImageController::class, 'uploadimage']);
 
 
 Route::post('/smart-assistant', [App\Http\Controllers\SmartChatController::class, 'handle'])->middleware('auth:sanctum');
+Route::get('/recipes/top-loved', [RecipeController::class, 'topLoved']);
+

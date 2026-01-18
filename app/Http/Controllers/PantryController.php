@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PantryItem;
 use App\Models\ShoppingItem;
+use App\Models\Ingredient;
 use Illuminate\Http\Request;
 
 class PantryController extends Controller
@@ -21,15 +22,24 @@ class PantryController extends Controller
             'item_name' => 'required|string'
         ]);
         $user = $request->user();
-        $existing = PantryItem::where('user_id', $user->id)->where('item_name', $request->item_name)->first();
+        
+        $existing = PantryItem::where('user_id', $user->id)
+            ->where('item_name', $request->item_name)
+            ->first();
+            
         if ($existing) {
             return response()->json(['status' => 'error', 'message' => 'Item already exists'], 409);
         }
 
+        // ✅ تصحيح: البحث باستخدام name_en بدلاً من name
+        $ingredient = Ingredient::where('name_en', $request->item_name)
+            ->orWhere('name_ar', $request->item_name)
+            ->first();
+
         $item = PantryItem::create([
             'user_id' => $user->id,
             'item_name' => strtolower($request->item_name),
-            'ingredient_id' => $request->ingredient_id
+            'ingredient_id' => $ingredient ? $ingredient->id : ($request->ingredient_id ?? null)
         ]);
 
         return response()->json(['status' => 'success', 'data' => $item]);
@@ -50,18 +60,27 @@ class PantryController extends Controller
 
     public function indexWithLang(Request $request)
     {
-        $lang = app()->getLocale(); // ar or en
+        $lang = app()->getLocale();
+        if($request->has('lang')) {
+            $lang = $request->query('lang');
+        }
+        
         $user = $request->user();
 
-        $items = PantryItem::where('user_id', $user->id)->get();
+        $items = PantryItem::with('ingredient')->where('user_id', $user->id)->get();
 
         $data = $items->map(function ($item) use ($lang) {
+            
+            $translatedName = null;
+            if ($item->ingredient) {
+                // ✅ تصحيح: استخدام name_en
+                $translatedName = $lang === 'ar' ? $item->ingredient->name_ar : $item->ingredient->name_en;
+            }
+
             return [
                 'id' => $item->id,
                 'item_name' => $item->item_name,
-                'display_name' => $lang === 'ar'
-                    ? $item->ingredient?->name_ar ?? $item->item_name
-                    : $item->ingredient?->name_en ?? $item->item_name
+                'display_name' => $translatedName ?? $item->item_name
             ];
         });
 
@@ -86,7 +105,6 @@ class PantryController extends Controller
             ], 404);
         }
 
-        // 👇 الجديد فقط
         ShoppingItem::where('user_id', $user->id)
             ->where('item_name', $item->item_name)
             ->update(['is_checked' => false]);

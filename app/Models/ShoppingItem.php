@@ -11,7 +11,9 @@ class ShoppingItem extends Model
         'item_name',
         'is_checked',
         'source_recipe_id',
+        'ingredient_id', // ✅ تمت الإضافة هنا
     ];
+
     public function recipe()
     {
         return $this->belongsTo(Recipe::class, 'source_recipe_id');

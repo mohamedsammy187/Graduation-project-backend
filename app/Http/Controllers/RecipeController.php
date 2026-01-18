@@ -25,7 +25,7 @@ class RecipeController extends Controller
 
         return [
             'id' => $recipe->id,
-            'title' => $recipe->title,
+            'title' => $lang === 'ar' ? $recipe->title_ar : ($recipe->title_en ?? $recipe->title),
             'slug' => $recipe->slug,
             'time' => $recipe->time,
             'difficulty' => $recipe->difficulty,
@@ -38,7 +38,7 @@ class RecipeController extends Controller
 
             'ingredients' => $recipe->ingredients->map(fn($i) => [
                 'id' => $i->id,
-                'name' => $i->name,
+                'name' => $lang === 'ar' ? $i->name_ar : $i->name_en, // ✅ تعديل للعرض
                 'quantity' => $i->pivot->quantity,
                 'unit' => $i->pivot->unit,
                 'display_text' => $i->pivot->display_text,
@@ -111,11 +111,17 @@ class RecipeController extends Controller
     public function matchPantry(Request $request)
     {
         $user = $request->user();
+        $lang = $request->get('lang', 'en'); // ✅ 1
 
-        // 🧺 1. Get pantry from DB
-        $pantry = PantryItem::where('user_id', $user->id)
-            ->pluck('item_name')
-            ->map(fn($i) => strtolower(trim($i)));
+        // 🧺 1. Get pantry (Standardized to English)
+        $pantry = PantryItem::with('ingredient')
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(function ($item) {
+                // ✅ نستخدم الاسم الانجليزي للمكون المربوط، أو الاسم المسجل
+                $name = $item->ingredient ? $item->ingredient->name_en : $item->item_name;
+                return strtolower(trim($name));
+            });
 
         if ($pantry->isEmpty()) {
             return response()->json([
@@ -164,14 +170,14 @@ class RecipeController extends Controller
         $recipes = $recipes->get();
         // 🧠 Match Logic
         $matchedRecipes = $recipes
-            ->map(function ($recipe) use ($pantry) {
+            ->map(function ($recipe) use ($pantry, $lang) {
 
-                $recipeIngredients = $recipe->ingredients
-                    ->pluck('name')
-                    ->map(fn($i) => strtolower($i));
+                // ✅ التعديل: فلترة الكائنات للحفاظ على الترجمة
+                $missingObjects = $recipe->ingredients->filter(function ($ingredient) use ($pantry) {
+                    return !$pantry->contains(strtolower($ingredient->name_en));
+                });
 
-                $matched = $recipeIngredients->intersect($pantry);
-                $missing = $recipeIngredients->diff($pantry);
+                $matchCount = $recipe->ingredients->count() - $missingObjects->count();
 
                 return [
                     'id' => $recipe->id,
@@ -184,11 +190,16 @@ class RecipeController extends Controller
                     'calories' => $recipe->calories,
                     'steps' => json_decode($recipe->steps, true),
 
-                    'match_count' => $matched->count(),
-                    'matched_ingredients' => $matched->values(),
+                    'match_count' => $matchCount,
+                    'matched_ingredients' => [],
 
-                    'missing_count' => $missing->count(),
-                    'missing_ingredients' => $missing->values(),
+                    'missing_count' => $missingObjects->count(),
+
+                    // ✅ إرجاع النواقص باللغة المطلوبة
+                    'missing_ingredients' => $missingObjects->map(
+                        fn($i) =>
+                        $lang === 'ar' ? $i->name_ar : $i->name_en
+                    )->values(),
                 ];
             })
 
@@ -226,11 +237,17 @@ class RecipeController extends Controller
     public function surpriseMe(Request $request)
     {
         $user = $request->user();
+        $lang = $request->get('lang', 'en'); // ✅ 2
 
-        // 1️⃣ Get pantry from shopping_items
-        $pantry = PantryItem::where('user_id', $user->id)
-            ->pluck('item_name')
-            ->map(fn($i) => strtolower(trim($i)));
+        // 1️⃣ Get pantry (Standardized to English)
+        $pantry = PantryItem::with('ingredient')
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(function ($item) {
+                // ✅ توحيد الاسم للانجليزية
+                $name = $item->ingredient ? $item->ingredient->name_en : $item->item_name;
+                return strtolower(trim($name));
+            });
 
         if ($pantry->isEmpty()) {
             return response()->json([
@@ -244,20 +261,20 @@ class RecipeController extends Controller
 
         $matched = $recipes
             ->filter(fn($r) => $r->id !== $user->last_surprise_recipe_id)
-            ->map(function ($recipe) use ($pantry) {
+            ->map(function ($recipe) use ($pantry, $lang) {
 
-                $ingredients = $recipe->ingredients
-                    ->pluck('name')
-                    ->map(fn($i) => strtolower($i));
+                // ✅ نفس المنطق
+                $missingObjects = $recipe->ingredients->filter(function ($ingredient) use ($pantry) {
+                    return !$pantry->contains(strtolower($ingredient->name_en));
+                });
 
-                $matched = $ingredients->intersect($pantry);
-                $missing = $ingredients->diff($pantry);
+                $matchCount = $recipe->ingredients->count() - $missingObjects->count();
 
                 return [
                     'recipe' => $recipe,
-                    'matched_count' => $matched->count(),
-                    'missing_count' => $missing->count(),
-                    'missing' => $missing
+                    'matched_count' => $matchCount,
+                    'missing_count' => $missingObjects->count(),
+                    'missing_objects' => $missingObjects
                 ];
             })
 
@@ -298,10 +315,13 @@ class RecipeController extends Controller
 
                 'ingredients' => $recipe->ingredients->map(fn($i) => [
                     'id' => $i->id,
-                    'name' => $i->name
+                    'name' => $lang === 'ar' ? $i->name_ar : $i->name_en // ✅ عرض الاسم المترجم
                 ]),
 
-                'missing_ingredients' => $selected['missing']->values(),
+                'missing_ingredients' => $selected['missing_objects']->map(
+                    fn($i) =>
+                    $lang === 'ar' ? $i->name_ar : $i->name_en
+                )->values(),
 
                 // ✅ deployment-safe link
                 'link' => rtrim(config('app.url'), '/') . "/api/recipes/slug/{$recipe->slug}",
@@ -310,31 +330,26 @@ class RecipeController extends Controller
     }
 
 
-    public function topLoved()
+    public function topLoved(Request $request)
     {
-        $lang = app()->getLocale();
+        // نستقبل اللغة من الرابط
+        $lang = $request->get('lang', 'en');
 
-        $recipes = Recipe::select(
-            'recipes.id',
-            'recipes.slug',
-            'recipes.image',
-            DB::raw('COUNT(favorites.id) as loves_count')
-        )
-            ->join('favorites', 'favorites.recipe_id', '=', 'recipes.id')
-            ->groupBy('recipes.id', 'recipes.slug', 'recipes.image')
+        // 1. نجيب الـ IDs لأعلى 3 وصفات محبوبة
+        $topRecipeIds = DB::table('favorites')
+            ->select('recipe_id', DB::raw('count(*) as loves_count'))
+            ->groupBy('recipe_id')
             ->orderByDesc('loves_count')
             ->limit(3)
+            ->pluck('recipe_id');
+
+        // 2. نجيب تفاصيل الوصفات دي كاملة (عشان المكونات تترجم)
+        $recipes = Recipe::with('ingredients')
+            ->whereIn('id', $topRecipeIds)
             ->get()
             ->map(function ($recipe) use ($lang) {
-                return [
-                    'id' => $recipe->id,
-                    'slug' => $recipe->slug,
-                    'title' => $lang === 'ar'
-                        ? $recipe->title_ar
-                        : $recipe->title_en,
-                    'image' => $recipe->image,
-                    'loves' => $recipe->loves_count
-                ];
+                // استخدام دالة الترجمة الموحدة
+                return $this->getLocalizedRecipe($recipe);
             });
 
         return response()->json([

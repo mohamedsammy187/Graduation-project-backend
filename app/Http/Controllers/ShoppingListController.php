@@ -4,28 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Recipe;
 use App\Models\ShoppingItem;
-use Illuminate\Http\Request;
 use App\Models\PantryItem;
+use App\Models\Ingredient;
+use Illuminate\Http\Request;
 
 class ShoppingListController extends Controller
 {
 
-    // GET /shopping-list
     public function index(Request $request)
-
     {
         $user = $request->user();
         return ShoppingItem::where('user_id', $user->id)->get();
     }
 
-    // POST /shopping-list
     public function store(Request $request)
-
     {
         $request->validate([
             'item_name' => 'required|string',
             'source_recipe_id' => 'nullable|exists:recipes,id'
         ]);
+
+        // ✅ تصحيح: البحث باستخدام name_en بدلاً من name
+        $ingredient = Ingredient::where('name_en', $request->item_name)
+            ->orWhere('name_ar', $request->item_name)
+            ->first();
 
         $item = ShoppingItem::firstOrCreate(
             [
@@ -33,7 +35,8 @@ class ShoppingListController extends Controller
                 'item_name' => $request->item_name
             ],
             [
-                'source_recipe_id' => $request->source_recipe_id
+                'source_recipe_id' => $request->source_recipe_id,
+                'ingredient_id' => $ingredient ? $ingredient->id : null
             ]
         );
 
@@ -45,22 +48,26 @@ class ShoppingListController extends Controller
 
     private function addToPantryAndMatch($user, $itemName)
     {
-        // ✅ Add to pantry if not exists
+        // ✅ تصحيح: البحث باستخدام name_en بدلاً من name
+        $ingredient = Ingredient::where('name_en', $itemName)
+            ->orWhere('name_ar', $itemName)
+            ->first();
+
         PantryItem::firstOrCreate([
             'user_id' => $user->id,
             'item_name' => strtolower(trim($itemName))
+        ], [
+            'ingredient_id' => $ingredient ? $ingredient->id : null
         ]);
 
-        // 🧠 Get pantry names
         $pantry = PantryItem::where('user_id', $user->id)
             ->pluck('item_name');
 
-        // 🔥 Matching Engine (نفس اللي كتبته قبل كده)
         return Recipe::with('ingredients')->get()
             ->map(function ($recipe) use ($pantry) {
 
                 $ingredients = $recipe->ingredients
-                    ->map(fn($i) => strtolower($i->name));
+                    ->map(fn($i) => strtolower($i->name)); // قد تحتاج لتعديل هذه أيضاً إلى name_en لو الموديل Ingredient لا يحتوي على Accessor
 
                 $matched = $ingredients->intersect($pantry);
                 $missing = $ingredients->diff($pantry);
@@ -78,7 +85,6 @@ class ShoppingListController extends Controller
     }
 
 
-    // PATCH /shopping-list/{id}
     public function toggle(Request $request, $id)
     {
         $user = $request->user();
@@ -92,7 +98,6 @@ class ShoppingListController extends Controller
 
         $recipes = [];
 
-        //true if check
         if ($request->is_checked) {
             $recipes = $this->addToPantryAndMatch($user, $item->item_name);
         }
@@ -104,7 +109,6 @@ class ShoppingListController extends Controller
     }
 
 
-    // DELETE /shopping-list/{id}
     public function destroy(Request $request, $id)
     {
         $user = $request->user();
@@ -132,15 +136,12 @@ class ShoppingListController extends Controller
             return response()->json(['message' => 'Recipe not found'], 404);
         }
 
-        // pantry → lowercase
         $pantry = collect($request->pantry)
             ->map(fn($i) => strtolower(trim($i)));
 
-        // recipe ingredients from relation
         $recipeIngredients = $recipe->ingredients
-            ->map(fn($i) => strtolower($i->name));
+            ->map(fn($i) => strtolower($i->name)); // تأكد من هذه أيضاً في الموديل
 
-        // missing ingredients
         $missing = $recipeIngredients
             ->diff($pantry)
             ->values();
@@ -160,18 +161,27 @@ class ShoppingListController extends Controller
     public function indexWithLang(Request $request)
     {
         $lang = app()->getLocale();
+        if($request->has('lang')) {
+            $lang = $request->query('lang');
+        }
+
         $user = $request->user();
 
-        $items = ShoppingItem::where('user_id', $user->id)->get();
+        $items = ShoppingItem::with('ingredient')->where('user_id', $user->id)->get();
 
         $data = $items->map(function ($item) use ($lang) {
+            $translatedName = null;
+            
+            if ($item->ingredient) {
+                // ✅ تصحيح: استخدام name_en
+                $translatedName = $lang === 'ar' ? $item->ingredient->name_ar : $item->ingredient->name_en;
+            }
+
             return [
                 'id' => $item->id,
                 'item_name' => $item->item_name,
                 'is_checked' => $item->is_checked,
-                'display_name' => $lang === 'ar'
-                    ? optional($item->ingredient)->name_ar ?? $item->item_name
-                    : optional($item->ingredient)->name_en ?? $item->item_name
+                'display_name' => $translatedName ?? $item->item_name
             ];
         });
 
