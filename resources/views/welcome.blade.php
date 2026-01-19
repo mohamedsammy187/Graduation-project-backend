@@ -142,6 +142,15 @@
         DELETE http://127.0.0.1:8000/api/admin/ingredients/{id}
 
     </p>
+        <p>
+        // Admin users Management
+        GET http://127.0.0.1:8000/api/admin/users/
+        GET http://127.0.0.1:8000/api/admin/users/{id}
+        POST http://127.0.0.1:8000/api/admin/users/
+        PUT http://127.0.0.1:8000/api/admin/users/{id}
+        DELETE http://127.0.0.1:8000/api/admin/users/{id}
+
+    </p>
     
     </p>
 </body>
