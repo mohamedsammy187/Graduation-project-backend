@@ -20,11 +20,26 @@ class RecipeAdminController extends Controller
             'title_ar' => 'required|string',
             'description_en' => 'nullable|string',
             'description_ar' => 'nullable|string',
+            'category' => 'required|string',
+            'meal_type' => 'required|string',
+            'time' => 'nullable|string',
+            'difficulty' => 'nullable|string',
+            'calories' => 'nullable|string',
+            'image' => 'nullable|string',
+            'steps' => 'nullable|array',
+            'cusine' => 'nullable|string',
+            'calories' => 'nullable|string',
+            'temperature' => 'nullable|string',
+            'nutrition' => 'nullable|array',
+
         ]);
 
         $recipe = Recipe::create($validated);
 
-        return response()->json($recipe, 201);
+        return response()->json([
+            'status' => 'success',
+            'data' => $recipe
+        ], 201);
     }
 
     public function show($id)
@@ -45,7 +60,10 @@ class RecipeAdminController extends Controller
 
         $recipe->update($validated);
 
-        return response()->json($recipe);
+        return response()->json([
+            'status' => 'updated',
+            'data' => $recipe
+        ]);
     }
 
     public function destroy($id)

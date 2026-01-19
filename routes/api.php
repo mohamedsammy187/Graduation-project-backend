@@ -14,6 +14,8 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LLMController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\Admin\RecipeAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\Admin\IngredientAdminController;
 use Illuminate\Http\Request;
 use App\Http\Middleware\SetLanguage;
 
@@ -130,11 +132,30 @@ Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
 Route::middleware(['auth:sanctum', 'admin'])
     ->prefix('admin')
     ->group(function () {
+        //admin recipe management routes
         Route::get('/recipes', [RecipeAdminController::class, 'index']);
+        Route::get('/recipes/{id}', [RecipeAdminController::class, 'show']);
         Route::post('/recipes', [RecipeAdminController::class, 'store']);
         Route::put('/recipes/{id}', [RecipeAdminController::class, 'update']);
         Route::delete('/recipes/{id}', [RecipeAdminController::class, 'destroy']);
+
+        // 🔥 Users CRUD
+        Route::get('/users', [UserAdminController::class, 'index']);
+        Route::get('/users/{id}', [UserAdminController::class, 'show']);
+        Route::post('/users', [UserAdminController::class, 'store']);
+        Route::put('/users/{id}', [UserAdminController::class, 'update']);
+        Route::delete('/users/{id}', [UserAdminController::class, 'destroy']);
+
+        // 🔥 Ingredients CRUD
+        Route::get('/ingredients', [IngredientAdminController::class, 'index']);
+        Route::get('/ingredients/{id}', [IngredientAdminController::class, 'show']);
+        Route::post('/ingredients', [IngredientAdminController::class, 'store']);
+        Route::put('/ingredients/{id}', [IngredientAdminController::class, 'update']);
+        Route::delete('/ingredients/{id}', [IngredientAdminController::class, 'destroy']);
     });
+
+
+
 
 
 
@@ -198,4 +219,3 @@ Route::post('/uploadimage', [ImageController::class, 'uploadimage']);
 
 Route::post('/smart-assistant', [App\Http\Controllers\SmartChatController::class, 'handle'])->middleware('auth:sanctum');
 Route::get('/recipes/top-loved', [RecipeController::class, 'topLoved']);
-

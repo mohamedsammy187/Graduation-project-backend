@@ -17,9 +17,9 @@ return new class extends Migration
             // $table->string('title');
             // $table->string('category');           // must provide in seeder
             $table->string('image')->nullable();
-            $table->string('time');
-            $table->string('difficulty');
-            $table->string('calories');
+            $table->string('time')->nullable();
+            $table->string('difficulty')->nullable();
+            $table->string('calories')->nullable();
             $table->longText('ingredients');      // store JSON
             $table->json('steps')->nullable();            // store JSON
             $table->timestamps();                 // created_at and updated_at
