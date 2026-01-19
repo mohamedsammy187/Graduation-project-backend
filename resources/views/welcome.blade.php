@@ -125,11 +125,24 @@
         GET http://127.0.0.1:8000/api/recipes/top-loved
     </p>
     <p>
-        Route::get('/recipes', [RecipeAdminController::class, 'index']);
-        Route::post('/recipes', [RecipeAdminController::class, 'store']);
-        Route::put('/recipes/{id}', [RecipeAdminController::class, 'update']);
-        Route::delete('/recipes/{id}', [RecipeAdminController::class, 'destroy']);
+        // Admin Recipe Management
+        GET http://127.0.0.1:8000/api/admin/recipes/
+        GET http://127.0.0.1:8000/api/admin/recipes/{id}
+        POST http://127.0.0.1:8000/api/admin/recipes/
+        PUT http://127.0.0.1:8000/api/admin/recipes/{id}
+        DELETE http://127.0.0.1:8000/api/admin/recipes/{id}
+
     </p>
+        <p>
+        // Admin ingredients Management
+        GET http://127.0.0.1:8000/api/admin/ingredients/
+        GET http://127.0.0.1:8000/api/admin/ingredients/{id}
+        POST http://127.0.0.1:8000/api/admin/ingredients/
+        PUT http://127.0.0.1:8000/api/admin/ingredients/{id}
+        DELETE http://127.0.0.1:8000/api/admin/ingredients/{id}
+
+    </p>
+    
     </p>
 </body>
 
