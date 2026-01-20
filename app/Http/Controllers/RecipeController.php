@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Ingredient;
 use App\Models\Recipe;
-use Illuminate\Http\Request;
 use App\Models\PantryItem;
-use App\Models\ShoppingItem;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class RecipeController extends Controller
@@ -16,345 +14,308 @@ class RecipeController extends Controller
         return response()->json(['message' => 'API is working']);
     }
 
-
+    /**
+     * Helper to format localized response
+     */
     private function getLocalizedRecipe(Recipe $recipe)
     {
-        // $lang = app()->getLocale();
         $lang = request()->get('lang', 'en');
-        $steps = json_decode($recipe->steps, true);
+
+        // 1. Ingredients handling
+        if ($recipe->relationLoaded('ingredients') && $recipe->getRelation('ingredients')->isNotEmpty()) {
+            $ingredients = $recipe->getRelation('ingredients')->map(function ($i) use ($lang) {
+                return [
+                    'id' => $i->id,
+                    'name' => $lang === 'ar' ? ($i->name_ar ?? $i->name_en) : ($i->name_en ?? $i->name_ar),
+                    'quantity' => $i->pivot->quantity ?? '',
+                    'unit' => $i->pivot->unit ?? '',
+                    'display_text' => $i->pivot->display_text ?? '',
+                    'is_optional' => $i->pivot->is_optional ?? 0,
+                ];
+            });
+        } else {
+            $rawJson = $recipe->getAttribute('ingredients');
+            $jsonIngs = !empty($rawJson) ? json_decode($rawJson, true) : [];
+            $ingredients = collect(is_array($jsonIngs) ? $jsonIngs : [])->map(function ($item) use ($lang) {
+                if (is_string($item))
+                    return ['name' => $item, 'id' => null, 'quantity' => '', 'unit' => '', 'is_optional' => 0];
+                $name = $lang === 'ar' ? ($item['name_ar'] ?? $item['item_name'] ?? '') : ($item['name_en'] ?? $item['item_name'] ?? '');
+                return [
+                    'id' => $item['id'] ?? null,
+                    'name' => $name,
+                    'quantity' => $item['quantity'] ?? '',
+                    'unit' => $item['unit'] ?? '',
+                    'display_text' => null,
+                    'is_optional' => 0
+                ];
+            });
+        }
+
+        // 2. Steps handling
+        if ($recipe->relationLoaded('steps') && $recipe->getRelation('steps')->isNotEmpty()) {
+            $steps = $recipe->getRelation('steps')->map(function ($step) use ($lang) {
+                return $lang === 'ar' ? ($step->instruction_ar ?? $step->instruction_en) : ($step->instruction_en ?? $step->instruction_ar);
+            });
+        } else {
+            $rawSteps = $recipe->getAttribute('steps');
+            $jsonSteps = !empty($rawSteps) ? json_decode($rawSteps, true) : [];
+            $steps = collect($jsonSteps[$lang] ?? $jsonSteps['en'] ?? $jsonSteps ?? []);
+        }
 
         return [
             'id' => $recipe->id,
-            'title' => $lang === 'ar' ? $recipe->title_ar : ($recipe->title_en ?? $recipe->title),
+            'title' => $lang === 'ar' ? ($recipe->title_ar ?? $recipe->title_en) : ($recipe->title_en ?? $recipe->title_ar),
+            'description' => $lang === 'ar' ? ($recipe->description_ar ?? $recipe->description_en) : ($recipe->description_en ?? $recipe->description_ar),
             'slug' => $recipe->slug,
-            'time' => $recipe->time,
+            'time' => intval($recipe->time) . ' min',
             'difficulty' => $recipe->difficulty,
             'calories' => $recipe->calories,
-            'temperature' => $recipe->temperature,
+            'temperature' => $recipe->temperature ? ucfirst(strtolower($recipe->temperature)) : '',
             'image' => $recipe->image,
             'servings' => $recipe->servings,
             'cuisine' => $recipe->cuisine,
-            'description' => $recipe->description,
-
-            'ingredients' => $recipe->ingredients->map(fn($i) => [
-                'id' => $i->id,
-                'name' => $lang === 'ar' ? $i->name_ar : $i->name_en, // ✅ تعديل للعرض
-                'quantity' => $i->pivot->quantity,
-                'unit' => $i->pivot->unit,
-                'display_text' => $i->pivot->display_text,
-                'is_optional' => $i->pivot->is_optional,
-            ]),
-
-            'steps' => $steps[$lang] ?? $steps['en'],
+            'category' => $recipe->category, // يعتمد على الـ Accessor في الموديل
+            'ingredients' => $ingredients,
+            'steps' => $steps,
         ];
     }
 
+    /**
+     * Fixed Search Function for Explore Page
+     */
+    public function search(Request $request)
+    {
+        $query = Recipe::with(['ingredients', 'steps', 'categoryInfo', 'user']);
+
+        // 1. فلترة القسم (ID أو نص)
+        if ($request->filled('category')) {
+            $cat = $request->category;
+            $query->where(function ($q) use ($cat) {
+                if (is_numeric($cat)) {
+                    $q->where('category_id', $cat);
+                } else {
+                    $catLower = strtolower($cat);
+                    $q->whereHas('categoryInfo', function ($sub) use ($catLower) {
+                        $sub->where(DB::raw('LOWER(name_en)'), $catLower)
+                            ->orWhere(DB::raw('LOWER(name_ar)'), $catLower);
+                    })->orWhere(DB::raw('LOWER(category)'), 'like', "%$catLower%");
+                }
+            });
+        }
+
+        // 2. فلترة المكونات (تم التحديث لدعم البحث المتعدد كما في الكنترولر القديم)
+        if ($request->filled('ingredients')) {
+            $ingredients = is_string($request->ingredients)
+                ? explode(',', $request->ingredients)
+                : $request->ingredients;
+
+            $query->whereHas('ingredients', function ($q) use ($ingredients) {
+                $q->where(function ($sub) use ($ingredients) {
+                    $sub->whereIn(DB::raw('LOWER(name_en)'), array_map('strtolower', $ingredients))
+                        ->orWhereIn('name_ar', $ingredients);
+                });
+            });
+        }
+
+        // 3. فلترة نوع الوجبة
+        if ($request->filled('meal_type')) {
+            $query->where(DB::raw('LOWER(meal_type)'), strtolower($request->meal_type));
+        }
+
+        // 4. فلترة درجة الحرارة
+        if ($request->filled('temperature')) {
+            $query->where(DB::raw('LOWER(temperature)'), strtolower($request->temperature));
+        }
+
+        // 5. البادجينيشن (Pagination)
+        $recipes = $query->latest()->paginate(9);
+
+        // تحويل البيانات للغة المطلوبة مع الحفاظ على هيكل الـ Pagination
+        return $recipes->through(fn($recipe) => $this->getLocalizedRecipe($recipe));
+    }
+
+    public function matchPantry(Request $request)
+    {
+        $user = $request->user();
+        $lang = $request->get('lang', 'en');
+
+        $pantry = PantryItem::with('ingredient')
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(fn($item) => strtolower(trim($item->ingredient ? $item->ingredient->name_en : $item->item_name)));
+
+        if ($pantry->isEmpty()) {
+            return response()->json(['status' => 'success', 'count' => 0, 'data' => [], 'message' => 'Pantry is empty']);
+        }
+
+        $allowMissingOne = filter_var($request->query('allow_missing_one', false), FILTER_VALIDATE_BOOLEAN);
+
+        $query = Recipe::with(['ingredients', 'steps', 'categoryInfo']);
+
+        if ($request->filled('category')) {
+            $cat = strtolower($request->category);
+            $query->where(function ($q) use ($cat) {
+                $q->whereHas('categoryInfo', function ($sub) use ($cat) {
+                    $sub->where(DB::raw('LOWER(name_en)'), $cat)->orWhere(DB::raw('LOWER(name_ar)'), $cat);
+                })->orWhere(DB::raw('LOWER(category)'), $cat);
+            });
+        }
+
+        if ($request->filled('meal_type')) {
+            $query->where(DB::raw('LOWER(meal_type)'), strtolower($request->meal_type));
+        }
+
+        if ($request->filled('temperature')) {
+            $query->where(DB::raw('LOWER(temperature)'), strtolower($request->temperature));
+        }
+
+        if ($request->filled('keyword')) {
+            $query->where(fn($q) => $q->where('title_en', 'like', "%{$request->keyword}%")->orWhere('title_ar', 'like', "%{$request->keyword}%"));
+        }
+
+        $matchedRecipes = $query->get()
+            ->map(function ($recipe) use ($pantry, $lang) {
+                if (!$recipe->relationLoaded('ingredients') || $recipe->getRelation('ingredients')->isEmpty())
+                    return null;
+
+                $recipeIngredients = $recipe->getRelation('ingredients');
+                $missingObjects = $recipeIngredients->filter(fn($ing) => !$pantry->contains(strtolower($ing->name_en)));
+                $matchCount = $recipeIngredients->count() - $missingObjects->count();
+
+                $stepsData = ($recipe->relationLoaded('steps') && $recipe->getRelation('steps')->isNotEmpty())
+                    ? $recipe->getRelation('steps')->map(fn($s) => $lang == 'ar' ? $s->instruction_ar : $s->instruction_en)
+                    : [];
+
+                return [
+                    'id' => $recipe->id,
+                    'title' => $lang === 'ar' ? ($recipe->title_ar ?? $recipe->title_en) : ($recipe->title_en ?? $recipe->title_ar),
+                    'slug' => $recipe->slug,
+                    'image' => $recipe->image,
+                    'difficulty' => $recipe->difficulty,
+                    'time' => intval($recipe->time) . ' min',
+                    'category' => $recipe->category,
+                    'calories' => $recipe->calories,
+                    'temperature' => $recipe->temperature ? ucfirst(strtolower($recipe->temperature)) : '',
+                    'steps' => $stepsData,
+                    'match_count' => $matchCount,
+                    'missing_count' => $missingObjects->count(),
+                    'missing_ingredients' => $missingObjects->map(function ($i) use ($lang) {
+                        return [
+                            'id' => $i->id,
+                            'name' => ($lang === 'ar' ? ($i->pivot->ingredient_name_ar ?? $i->name_ar ?? $i->name_en) : ($i->name_en ?? $i->name))
+                        ];
+                    })->values(),
+                ];
+            })
+            ->filter()
+            ->filter(fn($recipe) => $recipe['match_count'] > 0 && ($recipe['missing_count'] === 0 || ($allowMissingOne && $recipe['missing_count'] === 1)))
+            ->sortBy([['missing_count', 'asc'], ['match_count', 'desc']])
+            ->values();
+
+        return response()->json(['status' => 'success', 'count' => $matchedRecipes->count(), 'data' => $matchedRecipes]);
+    }
 
     public function index()
     {
-        $recipes = Recipe::with('ingredients')->paginate(9);
-
+        $recipes = Recipe::with(['ingredients', 'steps', 'categoryInfo'])->paginate(9);
         return response()->json([
-            'data' => $recipes->through(
-                fn($recipe) =>
-                $this->getLocalizedRecipe($recipe)
-            ),
+            'status' => 'success',
+            'data' => $recipes->through(fn($recipe) => $this->getLocalizedRecipe($recipe)),
             'meta' => [
                 'current_page' => $recipes->currentPage(),
                 'last_page' => $recipes->lastPage(),
-                'per_page' => $recipes->perPage(),
                 'total' => $recipes->total(),
             ],
         ]);
     }
 
-
-
-
     public function show($id)
     {
-        $recipe = Recipe::with('ingredients')->findOrFail($id);
-
-        return response()->json(
-            $this->getLocalizedRecipe($recipe)
-        );
+        $recipe = Recipe::with(['ingredients', 'steps', 'categoryInfo'])->findOrFail($id);
+        return response()->json($this->getLocalizedRecipe($recipe));
     }
-
-
-
-
-
 
     public function showrecipe($slug)
     {
-        $recipe = Recipe::with('ingredients')
-            ->where('slug', $slug)
-            ->firstOrFail();
-
-        return response()->json(
-            $this->getLocalizedRecipe($recipe)
-        );
+        $recipe = Recipe::with(['ingredients', 'steps', 'categoryInfo'])->where('slug', $slug)->firstOrFail();
+        return response()->json($this->getLocalizedRecipe($recipe));
     }
-
-
-
-    public function store(Request $request)
-    {
-        $recipe = Recipe::create($request->all());
-        return response()->json($recipe, 201);
-    }
-
-
-
-
-
-    public function matchPantry(Request $request)
-    {
-        $user = $request->user();
-        $lang = $request->get('lang', 'en'); // ✅ 1
-
-        // 🧺 1. Get pantry (Standardized to English)
-        $pantry = PantryItem::with('ingredient')
-            ->where('user_id', $user->id)
-            ->get()
-            ->map(function ($item) {
-                // ✅ نستخدم الاسم الانجليزي للمكون المربوط، أو الاسم المسجل
-                $name = $item->ingredient ? $item->ingredient->name_en : $item->item_name;
-                return strtolower(trim($name));
-            });
-
-        if ($pantry->isEmpty()) {
-            return response()->json([
-                'status' => 'success',
-                'count' => 0,
-                'data' => [],
-                'message' => 'Pantry is empty'
-            ]);
-        }
-
-        // 🔧 optional flag from query
-        // /recipes/match-pantry?allow_missing_one=true
-        $allowMissingOne = filter_var(
-            $request->query('allow_missing_one', false),
-            FILTER_VALIDATE_BOOLEAN
-        );
-
-        // 🍽 2. Load recipes
-        $recipes = Recipe::with('ingredients');
-        //  filters for matching
-        if ($request->query('keyword')) {
-            $keyword = $request->query('keyword');
-            $recipes = $recipes->where('title', 'like', "%{$keyword}%");
-        }
-        if ($request->query('difficulty')) {
-            $difficulty = $request->query('difficulty');
-            $recipes = $recipes->where('difficulty', $difficulty);
-        }
-        if ($request->query('max_time')) {
-            $maxTime = $request->query('max_time');
-            $recipes = $recipes->where('time', '<=', $maxTime);
-        }
-        if ($request->query('category')) {
-            $category = $request->query('category');
-            $recipes = $recipes->where('category', $category);
-        }
-        if ($request->query('meal_type')) {
-            $mealType = $request->query('meal_type');
-            $recipes = $recipes->where('meal_type', $mealType);
-        }
-        if ($request->query('temperature')) {
-            $mealType = $request->query('temperature');
-            $recipes = $recipes->where('temperature', $mealType);
-        }
-
-        $recipes = $recipes->get();
-        // 🧠 Match Logic
-        $matchedRecipes = $recipes
-            ->map(function ($recipe) use ($pantry, $lang) {
-
-                // ✅ التعديل: فلترة الكائنات للحفاظ على الترجمة
-                $missingObjects = $recipe->ingredients->filter(function ($ingredient) use ($pantry) {
-                    return !$pantry->contains(strtolower($ingredient->name_en));
-                });
-
-                $matchCount = $recipe->ingredients->count() - $missingObjects->count();
-
-                return [
-                    'id' => $recipe->id,
-                    'title' => $recipe->title,
-                    'slug' => $recipe->slug,
-                    'image' => $recipe->image,
-                    'difficulty' => $recipe->difficulty,
-                    'time' => $recipe->time,
-                    'category' => $recipe->category,
-                    'calories' => $recipe->calories,
-                    'steps' => json_decode($recipe->steps, true),
-
-                    'match_count' => $matchCount,
-                    'matched_ingredients' => [],
-
-                    'missing_count' => $missingObjects->count(),
-
-                    // ✅ إرجاع النواقص باللغة المطلوبة
-                    'missing_ingredients' => $missingObjects->map(
-                        fn($i) =>
-                        $lang === 'ar' ? $i->name_ar : $i->name_en
-                    )->values(),
-                ];
-            })
-
-            // 🧠 3. Filter logic
-            ->filter(function ($recipe) use ($allowMissingOne) {
-
-                if ($recipe['match_count'] === 0) {
-                    return false;
-                }
-
-                if ($recipe['missing_count'] === 0) {
-                    return true;
-                }
-
-                return $allowMissingOne && $recipe['missing_count'] === 1;
-            })
-
-            // 📊 4. Sort
-            ->sortBy([
-                ['missing_count', 'asc'],
-                ['match_count', 'desc'],
-            ])
-            ->values();
-
-        return response()->json([
-            'status' => 'success',
-            'count' => $matchedRecipes->count(),
-            'data' => $matchedRecipes
-        ]);
-    }
-
-
-
 
     public function surpriseMe(Request $request)
     {
-        $user = $request->user();
-        $lang = $request->get('lang', 'en'); // ✅ 2
+        try {
+            $user = $request->user();
+            $lang = $request->get('lang', 'en');
 
-        // 1️⃣ Get pantry (Standardized to English)
-        $pantry = PantryItem::with('ingredient')
-            ->where('user_id', $user->id)
-            ->get()
-            ->map(function ($item) {
-                // ✅ توحيد الاسم للانجليزية
-                $name = $item->ingredient ? $item->ingredient->name_en : $item->item_name;
-                return strtolower(trim($name));
-            });
+            // 1. جلب مكونات المطبخ بنفس منطق matchPantry
+            $pantry = PantryItem::with('ingredient')
+                ->where('user_id', $user->id)
+                ->get()
+                ->map(fn($item) => strtolower(trim($item->ingredient ? $item->ingredient->name_en : $item->item_name)));
 
-        if ($pantry->isEmpty()) {
-            return response()->json([
-                'status' => 'fail',
-                'message' => 'Your pantry is empty. Add ingredients first.'
-            ], 400);
-        }
+            if ($pantry->isEmpty()) {
+                return response()->json(['status' => 'fail', 'message' => 'Pantry empty'], 400);
+            }
 
-        // 2️⃣ Load recipes
-        $recipes = Recipe::with('ingredients')->get();
+            // 2. جلب الوصفات مع العلاقات الضرورية
+            $recipes = Recipe::with(['ingredients', 'steps', 'categoryInfo'])->get();
 
-        $matched = $recipes
-            ->filter(fn($r) => $r->id !== $user->last_surprise_recipe_id)
-            ->map(function ($recipe) use ($pantry, $lang) {
+            // 3. تطبيق منطق الماتشنج
+            $matchedRecipes = $recipes->map(function ($recipe) use ($pantry, $user) {
+                if ($recipe->id === $user->last_surprise_recipe_id)
+                    return null;
 
-                // ✅ نفس المنطق
-                $missingObjects = $recipe->ingredients->filter(function ($ingredient) use ($pantry) {
-                    return !$pantry->contains(strtolower($ingredient->name_en));
-                });
+                if (!$recipe->relationLoaded('ingredients') || $recipe->getRelation('ingredients')->isEmpty()) {
+                    return null;
+                }
 
-                $matchCount = $recipe->ingredients->count() - $missingObjects->count();
+                $recipeIngredients = $recipe->getRelation('ingredients');
+                $missingObjects = $recipeIngredients->filter(fn($ing) => !$pantry->contains(strtolower($ing->name_en)));
+                $matchCount = $recipeIngredients->count() - $missingObjects->count();
 
                 return [
                     'recipe' => $recipe,
-                    'matched_count' => $matchCount,
+                    'match_count' => $matchCount,
                     'missing_count' => $missingObjects->count(),
                     'missing_objects' => $missingObjects
                 ];
             })
+                ->filter()
+                ->filter(fn($item) => $item['match_count'] > 0 && $item['missing_count'] <= 1)
+                ->values();
 
-            // ✅ must match at least 1 ingredient
-            ->filter(fn($r) => $r['matched_count'] > 0)
+            if ($matchedRecipes->isEmpty()) {
+                return response()->json(['status' => 'fail', 'message' => 'No recipe found matching your pantry']);
+            }
 
-            // 🎲 allow missing one
-            ->filter(fn($r) => $r['missing_count'] <= 1)
-            ->values();
+            $selected = $matchedRecipes->random();
+            $recipe = $selected['recipe'];
 
-        if ($matched->isEmpty()) {
-            return response()->json([
-                'status' => 'fail',
-                'message' => 'No suitable recipe found with your pantry.'
-            ]);
-        }
+            $user->update(['last_surprise_recipe_id' => $recipe->id]);
 
-        // 3️⃣ Pick random recipe
-        $selected = $matched->random();
-        $recipe = $selected['recipe'];
+            $localized = $this->getLocalizedRecipe($recipe);
 
-        // 4️⃣ Save last suggested recipe
-        $user->update([
-            'last_surprise_recipe_id' => $recipe->id
-        ]);
-
-        // 5️⃣ Response
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'id' => $recipe->id,
-                'title' => $recipe->title,
-                'slug' => $recipe->slug,
-                'image' => $recipe->image,
-                'time' => $recipe->time,
-                'difficulty' => $recipe->difficulty,
-                'calories' => $recipe->calories,
-
-                'ingredients' => $recipe->ingredients->map(fn($i) => [
+            // --- الحل الجذري: نرسل الـ ID مع الاسم لضمان عمل المقارنة عند تحويل اللغة في الفرونت ---
+            $localized['missing_ingredients'] = $selected['missing_objects']->map(function ($i) use ($lang) {
+                return [
                     'id' => $i->id,
-                    'name' => $lang === 'ar' ? $i->name_ar : $i->name_en // ✅ عرض الاسم المترجم
-                ]),
+                    'name' => ($lang === 'ar' ? ($i->pivot->ingredient_name_ar ?? $i->name_ar ?? $i->name_en) : ($i->name_en ?? $i->name))
+                ];
+            })->values();
 
-                'missing_ingredients' => $selected['missing_objects']->map(
-                    fn($i) =>
-                    $lang === 'ar' ? $i->name_ar : $i->name_en
-                )->values(),
+            $localized['link'] = rtrim(config('app.url'), '/') . "/api/recipes/slug/{$recipe->slug}";
 
-                // ✅ deployment-safe link
-                'link' => rtrim(config('app.url'), '/') . "/api/recipes/slug/{$recipe->slug}",
-            ]
-        ]);
+            return response()->json(['status' => 'success', 'data' => $localized]);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'details' => $e->getMessage()], 500);
+        }
     }
-
-
     public function topLoved(Request $request)
     {
-        // نستقبل اللغة من الرابط
         $lang = $request->get('lang', 'en');
-
-        // 1. نجيب الـ IDs لأعلى 3 وصفات محبوبة
-        $topRecipeIds = DB::table('favorites')
-            ->select('recipe_id', DB::raw('count(*) as loves_count'))
-            ->groupBy('recipe_id')
-            ->orderByDesc('loves_count')
-            ->limit(3)
-            ->pluck('recipe_id');
-
-        // 2. نجيب تفاصيل الوصفات دي كاملة (عشان المكونات تترجم)
-        $recipes = Recipe::with('ingredients')
-            ->whereIn('id', $topRecipeIds)
-            ->get()
-            ->map(function ($recipe) use ($lang) {
-                // استخدام دالة الترجمة الموحدة
-                return $this->getLocalizedRecipe($recipe);
-            });
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $recipes
-        ]);
+        $topRecipeIds = DB::table('favorites')->select('recipe_id', DB::raw('count(*) as loves_count'))->groupBy('recipe_id')->orderByDesc('loves_count')->limit(3)->pluck('recipe_id');
+        $recipes = Recipe::with(['ingredients', 'steps', 'categoryInfo'])->whereIn('id', $topRecipeIds)->get()->map(fn($recipe) => $this->getLocalizedRecipe($recipe));
+        return response()->json(['status' => 'success', 'data' => $recipes]);
     }
 }

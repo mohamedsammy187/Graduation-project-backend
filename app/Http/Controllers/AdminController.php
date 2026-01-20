@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Recipe;
 use Illuminate\Http\Request;
 
-class RecipeAdminController extends Controller
+class AdminController extends Controller
 {
     public function index()
     {

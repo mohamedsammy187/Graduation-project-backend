@@ -35,7 +35,7 @@ Route::get('/test', [RecipeController::class, 'test']);
 
 Route::middleware(SetLanguage::class)->group(function () {
     //search
-    Route::match(['get', 'post'], '/recipes/search', [RecipeSearchController::class, 'search']);
+    Route::match(['get', 'post'], '/recipes/search', [RecipeController::class, 'search']);
     Route::get('/ingredients', [IngredientController::class, 'index']);
 
     Route::get('/recipes', [RecipeController::class, 'index']);
@@ -132,21 +132,36 @@ Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
 Route::middleware(['auth:sanctum', 'admin'])
     ->prefix('admin')
     ->group(function () {
-        //admin recipe management routes
-        Route::get('/recipes', [RecipeAdminController::class, 'index']);
-        Route::get('/recipes/{id}', [RecipeAdminController::class, 'show']);
+        
+        // 🔥 Dashboard Stats
+        Route::get('/stats', [App\Http\Controllers\Admin\DashboardController::class, 'stats']);
+
+        // ---------------------------------
+        // 🍲 Admin Recipe Management
+        // ---------------------------------
+        
+        // 1. هام جداً: الفلاتر لازم تكون قبل الـ ID
+        Route::get('/recipes/options', [RecipeAdminController::class, 'getFilterOptions']);
+
+        // 2. باقي المسارات
+        Route::get('/recipes', [RecipeAdminController::class, 'index']); // دي اللي فيها الفلترة
         Route::post('/recipes', [RecipeAdminController::class, 'store']);
-        Route::put('/recipes/{id}', [RecipeAdminController::class, 'update']);
+        Route::get('/recipes/{id}', [RecipeAdminController::class, 'show']);
+        Route::put('/recipes/{id}', [RecipeAdminController::class, 'update']); // لاحظ إننا بنستخدم PUT للتعديل
         Route::delete('/recipes/{id}', [RecipeAdminController::class, 'destroy']);
 
-        // 🔥 Users CRUD
+        // ---------------------------------
+        // 👤 Users CRUD
+        // ---------------------------------
         Route::get('/users', [UserAdminController::class, 'index']);
         Route::get('/users/{id}', [UserAdminController::class, 'show']);
         Route::post('/users', [UserAdminController::class, 'store']);
         Route::put('/users/{id}', [UserAdminController::class, 'update']);
         Route::delete('/users/{id}', [UserAdminController::class, 'destroy']);
 
-        // 🔥 Ingredients CRUD
+        // ---------------------------------
+        // 🥕 Ingredients CRUD
+        // ---------------------------------
         Route::get('/ingredients', [IngredientAdminController::class, 'index']);
         Route::get('/ingredients/{id}', [IngredientAdminController::class, 'show']);
         Route::post('/ingredients', [IngredientAdminController::class, 'store']);

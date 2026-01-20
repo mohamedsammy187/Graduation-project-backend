@@ -3,34 +3,64 @@
 namespace App\Models;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
-
 
 class Recipe extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
+        'user_id',
+        'category_id', 
         'title_en',
         'title_ar',
         'slug',
         'image',
-        'category',
+        'category',    
         'meal_type',
+        'cuisine',
         'temperature',
         'description_en',
         'description_ar',
-        'ingredients',
-        'steps',
         'time',
-        'quantity',
-        'unit',
         'difficulty',
-        'calories', 
-        'servings'
+        'calories',
+        'servings',
+        'nutrition',
+        'ingredients', 
+        'steps',       
     ];
 
+    protected $casts = [
+        'nutrition' => 'array',
+    ];
+
+    /**
+     * Accessor for Category
+     * Return the linked category name based on current language
+     */
+    public function getCategoryAttribute($value)
+    {
+        if ($this->categoryInfo) {
+            return (app()->getLocale() == 'ar') 
+                ? $this->categoryInfo->name_ar 
+                : $this->categoryInfo->name_en;
+        }
+
+        return $value ?: 'General';
+    }
+
+    public function categoryInfo()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function ingredients()
     {
@@ -42,60 +72,27 @@ class Recipe extends Model
                 'is_optional',
                 'ingredient_name_ar',
                 'sort_order'
-            ])
-            ->orderBy('ingredient_recipe.sort_order');
+            ]);
     }
 
-
-    public function ask(Request $request)
+    public function steps()
     {
-        $userQuestion = $request->input('prompt');
+        return $this->hasMany(Step::class)->orderBy('step_number');
+    }
 
-        // 1. Fetch relevant recipes from DB
-        $recipes = Recipe::where('title', 'like', "%$userQuestion%")
-            ->orWhereJsonContains('ingredients', $userQuestion)
-            ->limit(5)
-            ->get();
-
-        if ($recipes->isEmpty()) {
-            return response()->json([
-                'answer' => 'Sorry, I could not find recipes related to your question in our database.'
-            ]);
-        }
-
-        // 2. Build context from DB
-        $context = "You are a recipe assistant. Answer ONLY using the data below.\n\n";
-
-        foreach ($recipes as $r) {
-            $context .= "Title: {$r->title}\n";
-            $context .= "Ingredients: " . implode(', ', json_decode($r->ingredients, true)) . "\n";
-            $context .= "Steps: " . implode(' | ', json_decode($r->steps, true)) . "\n\n";
-        }
-
-        $finalPrompt = $context . "User question: " . $userQuestion;
-
-        // 3. Send to Gemini
-        $response = Http::post(
-            env('GEMINI_API_URL') . '?key=' . env('GEMINI_API_KEY'),
-            [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $finalPrompt]
-                        ]
-                    ]
-                ]
-            ]
-        );
-
-        return response()->json($response->json(), $response->status());
+    public function getImageAttribute($value)
+    {
+        if (!$value) return null;
+        if (str_starts_with($value, 'http')) return $value;
+        if (str_starts_with($value, 'asset/')) return asset($value);
+        return asset('storage/' . $value);
     }
 
     protected static function booted()
     {
         static::creating(function ($recipe) {
             if (empty($recipe->slug)) {
-                $recipe->slug = Str::slug($recipe->title) . '-' . uniqid();
+                $recipe->slug = Str::slug($recipe->title_en ?? $recipe->title_ar) . '-' . uniqid();
             }
         });
     }
@@ -105,28 +102,19 @@ class Recipe extends Model
         return 'slug';
     }
 
-    public function getTitleAttribute()
+    public function ask(Request $request)
     {
-        logger('TITLE ACCESSOR', [
-            'locale' => app()->getLocale(),
-            'ar' => $this->title_ar,
-            'en' => $this->title_en,
-        ]);
+        $userQuestion = $request->input('prompt');
+        $recipes = Recipe::with(['ingredients', 'steps'])
+            ->where('title_en', 'like', "%$userQuestion%")
+            ->orWhere('title_ar', 'like', "%$userQuestion%")
+            ->limit(3)
+            ->get();
 
-        return app()->getLocale() === 'ar'
-            ? ($this->title_ar ?? $this->title_en)
-            : ($this->title_en ?? $this->title_ar);
-    }
-
-    public function getDescriptionAttribute()
-    {
-        logger('TITLE ACCESSOR', [
-            'locale' => app()->getLocale(),
-            'ar' => $this->title_ar,
-            'en' => $this->title_en,
-        ]);
-        return app()->getLocale() === 'ar'
-            ? ($this->description_ar ?? $this->description_en)
-            : ($this->description_en ?? $this->description_ar);
+        if ($recipes->isEmpty()) {
+            return response()->json(['answer' => 'Sorry, I could not find recipes related to your question.']);
+        }
+        
+        return response()->json(['answer' => 'Logic here']);
     }
 }

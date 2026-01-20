@@ -11,7 +11,8 @@ class UserAdminController extends Controller
 {
     public function index()
     {
-        return User::all();
+        // تم التعديل: استخدام paginate
+        return User::latest()->paginate(15);
     }
 
     public function show($id)

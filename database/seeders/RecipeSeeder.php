@@ -5,14 +5,23 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Recipe;
 use App\Models\Ingredient;
+use App\Models\Step;
+use App\Models\Category;
 use Illuminate\Support\Str;
 
 class RecipeSeeder extends Seeder
 {
     public function run()
     {
-        $recipes = [
+        // خريطة ربط الكاتيجوري بالـ IDs الأساسية
+        $categoryMap = [
+            'meal'    => 1,
+            'dessert' => 2,
+            'drink'   => 3,
+            'snack'   => 4,
+        ];
 
+        $recipes = [
             [
                 'title_en' => 'Pancakes',
                 'title_ar' => 'بان كيك',
@@ -20,9 +29,9 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'breakfast',
                 'temperature' => 'cold',
                 'image' => 'asset/img/pancakes.jpg',
-                'time' => '20 min',
+                'time' => 20,
                 'difficulty' => 'Easy',
-                'calories' => '350',
+                'calories' => 350,
                 'servings' => 2,
                 'cuisine' => 'international',
                 'description_en' => 'Soft breakfast pancakes',
@@ -31,7 +40,6 @@ class RecipeSeeder extends Seeder
                 'steps_en' => ['Mix all ingredients together in a bowl', 'Heat a pan or griddle over medium heat', 'Pour batter and cook until edges look dry', 'Flip and cook the other side until golden'],
                 'steps_ar' => ['اخلط جميع المكونات معًا في وعاء', 'سخّن المقلاة على نار متوسطة', 'صب العجينة واطهِ حتى تجف الحواف', 'اقلب واطهِ الجانب الآخر حتى يصبح ذهبيًا'],
             ],
-
             [
                 'title_en' => 'Omelette',
                 'title_ar' => 'أومليت',
@@ -39,9 +47,9 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'breakfast',
                 'temperature' => 'hot',
                 'image' => 'asset/img/omelette.jpg',
-                'time' => '10 min',
+                'time' => 10,
                 'difficulty' => 'Easy',
-                'calories' => '200',
+                'calories' => 200,
                 'servings' => 1,
                 'cuisine' => 'international',
                 'description_en' => 'Classic egg omelette',
@@ -50,7 +58,6 @@ class RecipeSeeder extends Seeder
                 'steps_en' => ['Beat eggs with salt and pepper in a bowl', 'Heat butter in a non-stick pan over medium heat', 'Pour beaten eggs into the pan', 'Cook until edges set, then fold the omelette in half'],
                 'steps_ar' => ['اخفق البيض مع الملح والفلفل في وعاء', 'سخّن الزبدة في مقلاة غير لاصقة على نار متوسطة', 'صب البيض المخفوق في المقلاة', 'اطهِ حتى تتماسك الحواف، ثم اطوِ الأومليت من المنتصف'],
             ],
-
             [
                 'title_en' => 'Pizza',
                 'title_ar' => 'بيتزا',
@@ -58,9 +65,9 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/p3.jpeg',
-                'time' => '25 min',
+                'time' => 25,
                 'difficulty' => 'Medium',
-                'calories' => '300',
+                'calories' => 300,
                 'servings' => 3,
                 'cuisine' => 'italian',
                 'description_en' => 'Homemade pizza',
@@ -69,7 +76,6 @@ class RecipeSeeder extends Seeder
                 'steps_en' => ['Mix flour with water and knead the dough', 'Let dough rest for 30 minutes', 'Roll out dough and place on baking sheet', 'Add sauce, cheese, and toppings', 'Bake at 200°C for 15-20 minutes until golden'],
                 'steps_ar' => ['اخلط الدقيق مع الماء واعجن العجينة', 'اترك العجينة تستريح لمدة 30 دقيقة', 'افرد العجينة وضعها على صينية الخبز', 'أضف الصلصة والجبن والإضافات', 'اخبزها على 200 درجة مئوية لمدة 15-20 دقيقة حتى تصبح ذهبية'],
             ],
-
             [
                 'title_en' => 'Grilled Fish',
                 'title_ar' => 'سمك مشوي',
@@ -77,9 +83,9 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/grilled_fish.jpg',
-                'time' => '30 min',
+                'time' => 30,
                 'difficulty' => 'Easy',
-                'calories' => '350',
+                'calories' => 350,
                 'servings' => 2,
                 'cuisine' => 'seafood',
                 'description_en' => 'Healthy grilled fish',
@@ -88,7 +94,6 @@ class RecipeSeeder extends Seeder
                 'steps_en' => ['Clean and pat dry the fish', 'Season with salt, pepper, and lemon juice', 'Brush with olive oil', 'Grill on preheated grill for 4-5 minutes per side', 'Serve immediately with lemon wedges'],
                 'steps_ar' => ['نظف السمك وجففه بالمناديل', 'تبّل بالملح والفلفل وعصير الليمون', 'ادهن بزيت الزيتون', 'شوِ على شواية مسخنة لمدة 4-5 دقائق لكل جانب', 'قدّم مباشرة مع شرائح الليمون'],
             ],
-
             [
                 'title_en' => 'Shrimp Pasta',
                 'title_ar' => 'مكرونة بالجمبري',
@@ -96,9 +101,9 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'dinner',
                 'temperature' => 'hot',
                 'image' => 'asset/img/shrimp_pasta.jpg',
-                'time' => '35 min',
+                'time' => 35,
                 'difficulty' => 'Medium',
-                'calories' => '500',
+                'calories' => 500,
                 'servings' => 2,
                 'cuisine' => 'italian',
                 'description_en' => 'Creamy shrimp pasta',
@@ -107,8 +112,6 @@ class RecipeSeeder extends Seeder
                 'steps_en' => ['Boil pasta until al dente', 'Sauté minced garlic in olive oil', 'Add shrimp and cook until pink', 'Toss pasta with shrimp and garlic', 'Season with salt and serve hot'],
                 'steps_ar' => ['اسلق المعكرونة حتى تصبح طرية قليلاً', 'قلّي الثوم المفروم في زيت الزيتون', 'أضف الجمبري واطهِه حتى يصبح وردي اللون', 'امزج المعكرونة مع الجمبري والثوم', 'تبّل بالملح وقدّم ساخنًا'],
             ],
-
-
             [
                 'title_en' => 'Oats',
                 'title_ar' => 'الشوفان',
@@ -116,28 +119,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'breakfast',
                 'temperature' => 'hot',
                 'image' => 'asset/img/oats.jpg',
-                'time' => '5 min',
+                'time' => 5,
                 'difficulty' => 'Easy',
-                'calories' => '150',
+                'calories' => 150,
                 'servings' => 1,
                 'cuisine' => 'international',
                 'description_en' => 'Healthy oats breakfast',
                 'description_ar' => 'فطور صحي من الشوفان',
                 'ingredients' => ['oats', 'milk', 'honey'],
-                'steps_en' => [
-                    "Boil milk or water in a pot",
-                    "Add oats and stir well",
-                    "Cook for 3-5 minutes over medium heat",
-                    "Add honey or your favorite fruits",
-                    "Stir and serve warm"
-                ],
-                'steps_ar' => [
-                    "اسلق الحليب أو الماء في وعاء",
-                    "أضف الشوفان وحرك جيدًا",
-                    "اطهِ لمدة 3-5 دقائق على نار متوسطة",
-                    "أضف العسل أو فواكهك المفضلة",
-                    "حرك وقدّم ساخنًا"
-                ],
+                'steps_en' => ["Boil milk or water in a pot", "Add oats and stir well", "Cook for 3-5 minutes over medium heat", "Add honey or your favorite fruits", "Stir and serve warm"],
+                'steps_ar' => ["اسلق الحليب أو الماء في وعاء", "أضف الشوفان وحرك جيدًا", "اطهِ لمدة 3-5 دقائق على نار متوسطة", "أضف العسل أو فواكهك المفضلة", "حرك وقدّم ساخنًا"],
             ],
             [
                 'title_en' => 'Grilled Chicken',
@@ -146,28 +137,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/grilled_chicken.jpg',
-                'time' => '40 min',
+                'time' => 40,
                 'difficulty' => 'Medium',
-                'calories' => '400',
+                'calories' => 400,
                 'servings' => 2,
                 'cuisine' => 'international',
                 'description_en' => 'Delicious grilled chicken',
                 'description_ar' => 'دجاج مشوي لذيذ',
                 'ingredients' => ['chicken', 'salt', 'pepper', 'olive oil', 'herbs'],
-                'steps_en' => [
-                    "Pat chicken dry with paper towels",
-                    "Rub with olive oil and season with salt, pepper, and herbs",
-                    "Preheat grill to medium-high heat",
-                    "Grill chicken for 6-7 minutes per side",
-                    "Let rest for 5 minutes before serving"
-                ],
-                'steps_ar' => [
-                    "جفف الدجاج بمناديل ورقية",
-                    "ادهن بزيت الزيتون وتبّل بالملح والفلفل والأعشاب",
-                    "سخّن الشواية على نار عالية",
-                    "شوِ الدجاج لمدة 6-7 دقائق لكل جانب",
-                    "اترك الدجاج يستريح 5 دقائق قبل التقديم"
-                ],
+                'steps_en' => ["Pat chicken dry with paper towels", "Rub with olive oil and season with salt, pepper, and herbs", "Preheat grill to medium-high heat", "Grill chicken for 6-7 minutes per side", "Let rest for 5 minutes before serving"],
+                'steps_ar' => ["جفف الدجاج بمناديل ورقية", "ادهن بزيت الزيتون وتبّل بالملح والفلفل والأعشاب", "سخّن الشواية على نار عالية", "شوِ الدجاج لمدة 6-7 دقائق لكل جانب", "اترك الدجاج يستريح 5 دقائق قبل التقديم"],
             ],
             [
                 'title_en' => 'Pasta',
@@ -176,28 +155,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/pasta.jpg',
-                'time' => '30 min',
+                'time' => 30,
                 'difficulty' => 'Easy',
-                'calories' => '450',
+                'calories' => 450,
                 'servings' => 2,
                 'cuisine' => 'italian',
                 'description_en' => 'Classic pasta dish',
                 'description_ar' => 'طبق معكرونة كلاسيكي',
                 'ingredients' => ['pasta', 'chicken', 'sauce', 'salt', 'pepper'],
-                'steps_en' => [
-                    "Boil water and add pasta with salt",
-                    "Cook pasta until al dente, then drain",
-                    "Cook diced chicken in a separate pan until golden",
-                    "Add your favorite sauce to the chicken",
-                    "Mix pasta with chicken and sauce, season to taste"
-                ],
-                'steps_ar' => [
-                    "اسلق الماء وأضف المعكرونة مع الملح",
-                    "اطهِ المعكرونة حتى تصبح طرية قليلاً، ثم صفّها",
-                    "اطهِ الدجاج المقطع في مقلاة منفصلة حتى يصبح ذهبيًا",
-                    "أضف صلصتك المفضلة إلى الدجاج",
-                    "امزج المعكرونة مع الدجاج والصلصة، وتبّل حسب الرغبة"
-                ],
+                'steps_en' => ["Boil water and add pasta with salt", "Cook pasta until al dente, then drain", "Cook diced chicken in a separate pan until golden", "Add your favorite sauce to the chicken", "Mix pasta with chicken and sauce, season to taste"],
+                'steps_ar' => ["اسلق الماء وأضف المعكرونة مع الملح", "اطهِ المعكرونة حتى تصبح طرية قليلاً، ثم صفّها", "اطهِ الدجاج المقطع في مقلاة منفصلة حتى يصبح ذهبيًا", "أضف صلصتك المفضلة إلى الدجاج", "امزج المعكرونة مع الدجاج والصلصة، وتبّل حسب الرغبة"],
             ],
             [
                 'title_en' => 'Burger',
@@ -206,28 +173,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/burger.jpg',
-                'time' => '20 min',
+                'time' => 20,
                 'difficulty' => 'Medium',
-                'calories' => '600',
+                'calories' => 600,
                 'servings' => 1,
                 'cuisine' => 'american',
                 'description_en' => 'Juicy beef burger',
                 'description_ar' => 'برجر اللحم العصير',
                 'ingredients' => ['beef', 'bun', 'cheese', 'lettuce', 'tomato'],
-                'steps_en' => [
-                    "Form ground beef into a patty and season",
-                    "Heat a skillet and cook patty for 3-4 minutes per side",
-                    "Add cheese and let it melt",
-                    "Toast the bun lightly",
-                    "Assemble burger with lettuce, tomato, and condiments"
-                ],
-                'steps_ar' => [
-                    "شكّل اللحم المفروم إلى فطيرة وتبّله",
-                    "سخّن مقلاة واطهِ الفطيرة 3-4 دقائق لكل جانب",
-                    "أضف الجبن واترها تذوب",
-                    "حمّص الخبز قليلاً",
-                    "رتب البرجر مع الخس والطماطم والصلصات"
-                ],
+                'steps_en' => ["Form ground beef into a patty and season", "Heat a skillet and cook patty for 3-4 minutes per side", "Add cheese and let it melt", "Toast the bun lightly", "Assemble burger with lettuce, tomato, and condiments"],
+                'steps_ar' => ["شكّل اللحم المفروم إلى فطيرة وتبّله", "سخّن مقلاة واطهِ الفطيرة 3-4 دقائق لكل جانب", "أضف الجبن واترها تذوب", "حمّص الخبز قليلاً", "رتب البرجر مع الخس والطماطم والصلصات"],
             ],
             [
                 'title_en' => 'Chicken Rice',
@@ -236,28 +191,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/chicken_rice.jpg',
-                'time' => '45 min',
+                'time' => 45,
                 'difficulty' => 'Medium',
-                'calories' => '500',
+                'calories' => 500,
                 'servings' => 3,
                 'cuisine' => 'middle_eastern',
                 'description_en' => 'Aromatic chicken rice',
                 'description_ar' => 'أرز عطري بالدجاج',
                 'ingredients' => ['chicken', 'rice', 'spices', 'salt', 'oil'],
-                'steps_en' => [
-                    "Heat oil and sauté diced chicken until cooked",
-                    "Add spices and cook for 2 minutes to release flavors",
-                    "Rinse rice and add to the chicken",
-                    "Stir for 2 minutes, then add water (2:1 ratio)",
-                    "Bring to boil, then simmer covered for 15-20 minutes"
-                ],
-                'steps_ar' => [
-                    "سخّن الزيت وقلّي الدجاج المقطع حتى ينضج",
-                    "أضف التوابل واطهِها لمدة دقيقتين لإطلاق النكهات",
-                    "اشطف الأرز وأضفه إلى الدجاج",
-                    "حرك لمدة دقيقتين، ثم أضف الماء (نسبة 2:1)",
-                    "اجعله يغلي ثم اطهِه مغطى لمدة 15-20 دقيقة"
-                ],
+                'steps_en' => ["Heat oil and sauté diced chicken until cooked", "Add spices and cook for 2 minutes to release flavors", "Rinse rice and add to the chicken", "Stir for 2 minutes, then add water (2:1 ratio)", "Bring to boil, then simmer covered for 15-20 minutes"],
+                'steps_ar' => ["سخّن الزيت وقلّي الدجاج المقطع حتى ينضج", "أضف التوابل واطهِها لمدة دقيقتين لإطلاق النكهات", "اشطف الأرز وأضفه إلى الدجاج", "حرك لمدة دقيقتين، ثم أضف الماء (نسبة 2:1)", "اجعله يغلي ثم اطهِه مغطى لمدة 15-20 دقيقة"],
             ],
             [
                 'title_en' => 'Lemon Juice',
@@ -266,28 +209,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'breakfast',
                 'temperature' => 'cold',
                 'image' => 'asset/img/lemon_juice.jpg',
-                'time' => '5 min',
+                'time' => 5,
                 'difficulty' => 'Easy',
-                'calories' => '50',
+                'calories' => 50,
                 'servings' => 2,
                 'cuisine' => 'international',
                 'description_en' => 'Fresh lemon juice',
                 'description_ar' => 'عصير ليمون طازج',
                 'ingredients' => ['lemon', 'water', 'sugar'],
-                'steps_en' => [
-                    "Cut lemons in half and squeeze the juice",
-                    "Strain the juice to remove seeds and pulp",
-                    "Mix juice with cold water",
-                    "Add sugar or honey to taste",
-                    "Stir well and serve over ice"
-                ],
-                'steps_ar' => [
-                    "قطع الليمون نصفين واعصر العصير",
-                    "صفّ العصير للتخلص من البذور واللب",
-                    "امزج العصير مع الماء البارد",
-                    "أضف السكر أو العسل حسب الرغبة",
-                    "حرك جيدًا وقدّم مع الثلج"
-                ],
+                'steps_en' => ["Cut lemons in half and squeeze the juice", "Strain the juice to remove seeds and pulp", "Mix juice with cold water", "Add sugar or honey to taste", "Stir well and serve over ice"],
+                'steps_ar' => ["قطع الليمون نصفين واعصر العصير", "صفّ العصير للتخلص من البذور واللب", "امزج العصير مع الماء البارد", "أضف السكر أو العسل حسب الرغبة", "حرك جيدًا وقدّم مع الثلج"],
             ],
             [
                 'title_en' => 'Smoothie',
@@ -296,28 +227,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'breakfast',
                 'temperature' => 'cold',
                 'image' => 'asset/img/smoothie.jpg',
-                'time' => '10 min',
+                'time' => 10,
                 'difficulty' => 'Easy',
-                'calories' => '200',
+                'calories' => 200,
                 'servings' => 1,
                 'cuisine' => 'international',
                 'description_en' => 'Creamy fruit smoothie',
                 'description_ar' => 'سموثي الفواكه الكريمي',
                 'ingredients' => ['banana', 'milk', 'yogurt', 'honey'],
-                'steps_en' => [
-                    "Peel and slice the banana",
-                    "Add banana, milk, yogurt, and honey to blender",
-                    "Blend until smooth and creamy",
-                    "Add ice if desired for extra coldness",
-                    "Pour into glass and serve immediately"
-                ],
-                'steps_ar' => [
-                    "قشّر الموز وقطّعه",
-                    "أضف الموز والحليب والزبادي والعسل إلى الخلاط",
-                    "اخلط حتى يصبح ناعمًا وكريميًا",
-                    "أضف الثلج إذا أردت برودة أكثر",
-                    "صب في كوب وقدّم مباشرة"
-                ],
+                'steps_en' => ["Peel and slice the banana", "Add banana, milk, yogurt, and honey to blender", "Blend until smooth and creamy", "Add ice if desired for extra coldness", "Pour into glass and serve immediately"],
+                'steps_ar' => ["قشّر الموز وقطّعه", "أضف الموز والحليب والزبادي والعسل إلى الخلاط", "اخلط حتى يصبح ناعمًا وكريميًا", "أضف الثلج إذا أردت برودة أكثر", "صب في كوب وقدّم مباشرة"],
             ],
             [
                 'title_en' => 'Fruit Salad',
@@ -326,28 +245,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'dinner',
                 'temperature' => 'cold',
                 'image' => 'asset/img/fruit_salad.jpg',
-                'time' => '10 min',
+                'time' => 10,
                 'difficulty' => 'Easy',
-                'calories' => '150',
+                'calories' => 150,
                 'servings' => 2,
                 'cuisine' => 'international',
                 'description_en' => 'Fresh fruit salad',
                 'description_ar' => 'سلطة فواكه طازجة',
                 'ingredients' => ['apple', 'banana', 'orange', 'yogurt'],
-                'steps_en' => [
-                    "Wash all fruits thoroughly",
-                    "Peel and chop apples, bananas, and oranges",
-                    "Place fruits in a large bowl",
-                    "Add yogurt and honey",
-                    "Toss gently and serve chilled"
-                ],
-                'steps_ar' => [
-                    "اغسل جميع الفواكه جيدًا",
-                    "قشّر وقطّع التفاح والموز والبرتقال",
-                    "ضع الفواكه في وعاء كبير",
-                    "أضف الزبادي والعسل",
-                    "اخلط برفق وقدّم مثلجًا"
-                ],
+                'steps_en' => ["Wash all fruits thoroughly", "Peel and chop apples, bananas, and oranges", "Place fruits in a large bowl", "Add yogurt and honey", "Toss gently and serve chilled"],
+                'steps_ar' => ["اغسل جميع الفواكه جيدًا", "قشّر وقطّع التفاح والموز والبرتقال", "ضع الفواكه في وعاء كبير", "أضف الزبادي والعسل", "اخلط برفق وقدّم مثلجًا"],
             ],
             [
                 'title_en' => 'Cookies',
@@ -356,28 +263,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'dinner',
                 'temperature' => 'cold',
                 'image' => 'asset/img/cookies.jpg',
-                'time' => '25 min',
+                'time' => 25,
                 'difficulty' => 'Medium',
-                'calories' => '300',
+                'calories' => 300,
                 'servings' => 4,
                 'cuisine' => 'international',
                 'description_en' => 'Homemade cookies',
                 'description_ar' => 'بسكويت منزلي',
                 'ingredients' => ['flour', 'sugar', 'butter', 'egg', 'chocolate'],
-                'steps_en' => [
-                    "Cream butter and sugar until fluffy",
-                    "Beat in eggs one at a time",
-                    "Mix in flour and chocolate chips",
-                    "Drop spoonfuls onto baking sheet",
-                    "Bake at 180°C for 12-15 minutes until golden"
-                ],
-                'steps_ar' => [
-                    "اخلط الزبدة والسكر حتى تصبح رقيقة",
-                    "أضف البيض واحدة تلو الأخرى",
-                    "امزج الدقيق وقطع الشوكولاتة",
-                    "ضع ملاعق على صينية الخبز",
-                    "اخبزها على 180 درجة مئوية لمدة 12-15 دقيقة حتى تصبح ذهبية"
-                ],
+                'steps_en' => ["Cream butter and sugar until fluffy", "Beat in eggs one at a time", "Mix in flour and chocolate chips", "Drop spoonfuls onto baking sheet", "Bake at 180°C for 12-15 minutes until golden"],
+                'steps_ar' => ["اخلط الزبدة والسكر حتى تصبح رقيقة", "أضف البيض واحدة تلو الأخرى", "امزج الدقيق وقطع الشوكولاتة", "ضع ملاعق على صينية الخبز", "اخبزها على 180 درجة مئوية لمدة 12-15 دقيقة حتى تصبح ذهبية"],
             ],
             [
                 'title_en' => 'Fried Fish',
@@ -386,28 +281,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/fried_fish.jpg',
-                'time' => '25 min',
+                'time' => 25,
                 'difficulty' => 'Medium',
-                'calories' => '450',
+                'calories' => 450,
                 'servings' => 2,
                 'cuisine' => 'seafood',
                 'description_en' => 'Crispy fried fish',
                 'description_ar' => 'سمك مقلي مقرمش',
                 'ingredients' => ['fish', 'flour', 'salt', 'pepper', 'oil'],
-                'steps_en' => [
-                    "Pat fish dry and season with salt and pepper",
-                    "Mix flour with salt and pepper in a shallow bowl",
-                    "Coat fish pieces with flour mixture",
-                    "Heat oil in deep pan until hot",
-                    "Fry fish until golden and crispy on both sides"
-                ],
-                'steps_ar' => [
-                    "جفف السمك وتبّله بالملح والفلفل",
-                    "امزج الدقيق مع الملح والفلفل في وعاء ضحل",
-                    "لبّس قطع السمك بخليط الدقيق",
-                    "سخّن الزيت في مقلاة عميقة حتى يصبح ساخنًا",
-                    "قلِ السمك حتى يصبح ذهبيًا ومقرمشًا من الجانبين"
-                ],
+                'steps_en' => ["Pat fish dry and season with salt and pepper", "Mix flour with salt and pepper in a shallow bowl", "Coat fish pieces with flour mixture", "Heat oil in deep pan until hot", "Fry fish until golden and crispy on both sides"],
+                'steps_ar' => ["جفف السمك وتبّله بالملح والفلفل", "امزج الدقيق مع الملح والفلفل في وعاء ضحل", "لبّس قطع السمك بخليط الدقيق", "سخّن الزيت في مقلاة عميقة حتى يصبح ساخنًا", "قلِ السمك حتى يصبح ذهبيًا ومقرمشًا من الجانبين"],
             ],
             [
                 'title_en' => 'Seafood Rice',
@@ -416,28 +299,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/seafood_rice.jpg',
-                'time' => '40 min',
+                'time' => 40,
                 'difficulty' => 'Medium',
-                'calories' => '520',
+                'calories' => 520,
                 'servings' => 3,
                 'cuisine' => 'seafood',
                 'description_en' => 'Delicious seafood rice',
                 'description_ar' => 'أرز بحري لذيذ',
                 'ingredients' => ['rice', 'shrimp', 'fish', 'spices', 'salt'],
-                'steps_en' => [
-                    "Rinse rice and cook in boiling water until tender",
-                    "Drain and set aside",
-                    "Cook shrimp and fish in olive oil with spices",
-                    "Add the cooked seafood to the rice",
-                    "Mix gently and season with salt, then serve hot"
-                ],
-                'steps_ar' => [
-                    "اشطف الأرز واسلقه في ماء مغلي حتى ينضج",
-                    "صفّه واتركه جانبًا",
-                    "اطهِ الجمبري والسمك بزيت الزيتون والتوابل",
-                    "أضف المأكولات البحرية المطهية إلى الأرز",
-                    "امزج بحذر وتبّل بالملح، ثم قدّم ساخنًا"
-                ],
+                'steps_en' => ["Rinse rice and cook in boiling water until tender", "Drain and set aside", "Cook shrimp and fish in olive oil with spices", "Add the cooked seafood to the rice", "Mix gently and season with salt, then serve hot"],
+                'steps_ar' => ["اشطف الأرز واسلقه في ماء مغلي حتى ينضج", "صفّه واتركه جانبًا", "اطهِ الجمبري والسمك بزيت الزيتون والتوابل", "أضف المأكولات البحرية المطهية إلى الأرز", "امزج بحذر وتبّل بالملح، ثم قدّم ساخنًا"],
             ],
             [
                 'title_en' => 'Tuna Salad',
@@ -446,28 +317,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'dinner',
                 'temperature' => 'cold',
                 'image' => 'asset/img/tuna_salad.jpg',
-                'time' => '10 min',
+                'time' => 10,
                 'difficulty' => 'Easy',
-                'calories' => '300',
+                'calories' => 300,
                 'servings' => 1,
                 'cuisine' => 'seafood',
                 'description_en' => 'Fresh tuna salad',
                 'description_ar' => 'سلطة التونة الطازجة',
                 'ingredients' => ['tuna', 'lettuce', 'tomato', 'olive oil', 'lemon'],
-                'steps_en' => [
-                    "Wash and chop lettuce and tomato",
-                    "Arrange vegetables in a salad bowl",
-                    "Place tuna on top of vegetables",
-                    "Drizzle with olive oil and fresh lemon juice",
-                    "Season with salt and pepper, then serve"
-                ],
-                'steps_ar' => [
-                    "اغسل وقطّع الخس والطماطم",
-                    "رتب الخضار في وعاء السلطة",
-                    "ضع التونة فوق الخضار",
-                    "رش بزيت الزيتون وعصير الليمون الطازج",
-                    "تبّل بالملح والفلفل، ثم قدّم"
-                ],
+                'steps_en' => ["Wash and chop lettuce and tomato", "Arrange vegetables in a salad bowl", "Place tuna on top of vegetables", "Drizzle with olive oil and fresh lemon juice", "Season with salt and pepper, then serve"],
+                'steps_ar' => ["اغسل وقطّع الخس والطماطم", "رتب الخضار في وعاء السلطة", "ضع التونة فوق الخضار", "رش بزيت الزيتون وعصير الليمون الطازج", "تبّل بالملح والفلفل، ثم قدّم"],
             ],
             [
                 'title_en' => 'Shrimp Soup',
@@ -476,28 +335,16 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'dinner',
                 'temperature' => 'hot',
                 'image' => 'asset/img/shrimp_soup.jpg',
-                'time' => '30 min',
+                'time' => 30,
                 'difficulty' => 'Easy',
-                'calories' => '280',
+                'calories' => 280,
                 'servings' => 2,
                 'cuisine' => 'seafood',
                 'description_en' => 'Delicate shrimp soup',
                 'description_ar' => 'حساء الجمبري اللذيذ',
                 'ingredients' => ['shrimp', 'onion', 'garlic', 'salt', 'water'],
-                'steps_en' => [
-                    "Boil water in a large pot",
-                    "Add chopped onion and garlic",
-                    "Cook for 3-4 minutes until fragrant",
-                    "Add shrimp and season with salt",
-                    "Simmer for 10-15 minutes until shrimp are pink and cooked"
-                ],
-                'steps_ar' => [
-                    "اسلق الماء في وعاء كبير",
-                    "أضف البصل والثوم المفرومين",
-                    "اطهِ لمدة 3-4 دقائق حتى تصبح عطرية",
-                    "أضف الجمبري وتبّل بالملح",
-                    "اترك على نار هادئة لمدة 10-15 دقيقة حتى ينضج الجمبري ويصبح وردي اللون"
-                ],
+                'steps_en' => ["Boil water in a large pot", "Add chopped onion and garlic", "Cook for 3-4 minutes until fragrant", "Add shrimp and season with salt", "Simmer for 10-15 minutes until shrimp are pink and cooked"],
+                'steps_ar' => ["اسلق الماء في وعاء كبير", "أضف البصل والثوم المفرومين", "اطهِ لمدة 3-4 دقائق حتى تصبح عطرية", "أضف الجمبري وتبّل بالملح", "اترك على نار هادئة لمدة 10-15 دقيقة حتى ينضج الجمبري ويصبح وردي اللون"],
             ],
             [
                 'title_en' => 'Fish Sandwich',
@@ -506,58 +353,58 @@ class RecipeSeeder extends Seeder
                 'meal_type' => 'lunch',
                 'temperature' => 'hot',
                 'image' => 'asset/img/fish_sandwich.jpg',
-                'time' => '15 min',
+                'time' => 15,
                 'difficulty' => 'Easy',
-                'calories' => '400',
+                'calories' => 400,
                 'servings' => 1,
                 'cuisine' => 'seafood',
                 'description_en' => 'Tasty fish sandwich',
                 'description_ar' => 'ساندويتش السمك اللذيذ',
                 'ingredients' => ['fish', 'bun', 'lettuce', 'tomato', 'sauce'],
-                'steps_en' => [
-                    "Pan-fry or grill the fish until cooked through",
-                    "Toast the sandwich bun lightly",
-                    "Spread sauce on both halves of the bun",
-                    "Layer lettuce and tomato on bottom bun",
-                    "Place fish on top and close sandwich"
-                ],
-                'steps_ar' => [
-                    "قلِ أو شوِ السمك حتى ينضج تمامًا",
-                    "حمّص الخبز قليلاً",
-                    "ادهن الصلصة على جانبي الخبز",
-                    "رتب الخس والطماطم على نصف الخبز السفلي",
-                    "ضع السمك فوقها وأغلق الساندويتش"
-                ],
+                'steps_en' => ["Pan-fry or grill the fish until cooked through", "Toast the sandwich bun lightly", "Spread sauce on both halves of the bun", "Layer lettuce and tomato on bottom bun", "Place fish on top and close sandwich"],
+                'steps_ar' => ["قلِ أو شوِ السمك حتى ينضج تمامًا", "حمّص الخبز قليلاً", "ادهن الصلصة على جانبي الخبز", "رتب الخس والطماطم على نصف الخبز السفلي", "ضع السمك فوقها وأغلق الساندويتش"],
             ],
         ];
 
         foreach ($recipes as $data) {
+            // جلب الـ ID المناسب من الـ Map أو افتراض 1 لو مش موجود
+            $catId = $categoryMap[$data['category']] ?? 1;
 
             $recipe = Recipe::create([
-                // 'title' => $data['title_en'],
                 'title_en' => $data['title_en'],
                 'title_ar' => $data['title_ar'],
-                'category' => $data['category'],
+                'category_id' => $catId,
                 'meal_type' => $data['meal_type'],
                 'temperature' => $data['temperature'],
                 'slug' => Str::slug($data['title_en']) . '-' . uniqid(),
                 'image' => $data['image'],
-                'time' => $data['time'],
+                'time' => $data['time'], // أرقام فقط الآن
                 'difficulty' => $data['difficulty'],
                 'cuisine' => $data['cuisine'],
-                'nutrition' => json_encode(['calories' => $data['calories']]),
-                'calories' => $data['calories'],
+                'calories' => (int)$data['calories'],
                 'servings' => $data['servings'],
-                'steps' => json_encode([
-                    'en' => $data['steps_en'],
-                    'ar' => $data['steps_ar'],
-                ]),
                 'description_en' => $data['description_en'],
                 'description_ar' => $data['description_ar'],
+                // Legacy JSON support
+                'steps' => json_encode(['en' => $data['steps_en'], 'ar' => $data['steps_ar']], JSON_UNESCAPED_UNICODE),
+                'ingredients' => json_encode($data['ingredients']),
             ]);
 
+            // ربط المكونات (Pivot)
             $ingredientIds = Ingredient::whereIn('name_en', $data['ingredients'])->pluck('id');
-            $recipe->ingredients()->sync($ingredientIds);
+            foreach ($ingredientIds as $ingId) {
+                $recipe->ingredients()->attach($ingId, ['quantity' => '1', 'unit' => 'piece']);
+            }
+
+            // إضافة الخطوات في الجدول المنفصل
+            foreach ($data['steps_en'] as $index => $stepEn) {
+                Step::create([
+                    'recipe_id' => $recipe->id,
+                    'step_number' => $index + 1,
+                    'instruction_en' => $stepEn,
+                    'instruction_ar' => $data['steps_ar'][$index],
+                ]);
+            }
         }
     }
 }
