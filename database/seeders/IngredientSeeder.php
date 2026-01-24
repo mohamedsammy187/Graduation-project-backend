@@ -56,17 +56,60 @@ class IngredientSeeder extends Seeder
             ['oil', 'زيت', 'Oils', 'asset\img\ingredients\oil.png', 1, 1, 1, 1, 0, 1],
             ['olive oil', 'زيت زيتون', 'Oils', 'asset\img\ingredients\olive_oil.png', 1, 1, 1, 1, 0, 1],
 
+            // Proteins - Additional
+            ['lamb', 'لحم الضأن', 'Meat & Poultry', 'asset\img\ingredients\lamb.png', 0, 1, 1, 1, 0, 0],
+
+            // Vegetables - Additional
+            ['broccoli', 'بروكلي', 'Vegetables', 'asset\img\ingredients\broccoli.png', 1, 1, 1, 1, 0, 0],
+            ['bell pepper', 'الفلفل الحلو', 'Vegetables', 'asset\img\ingredients\bell_pepper.png', 1, 1, 1, 1, 0, 0],
+            ['avocado', 'أفوكادو', 'Vegetables', 'asset\img\ingredients\avocado.png', 1, 1, 1, 1, 0, 0],
+
             // Fruits
             ['lemon', 'ليمون', 'Fruits', 'asset\img\ingredients\lemon.png', 1, 1, 1, 1, 1, 0],
             ['banana', 'موز', 'Fruits', 'asset\img\ingredients\banana.png', 1, 1, 1, 1, 1, 0],
             ['apple', 'تفاح', 'Fruits', 'asset\img\ingredients\apple.png', 1, 1, 1, 1, 1, 0],
             ['orange', 'برتقال', 'Fruits', 'asset\img\ingredients\orange.png', 1, 1, 1, 1, 1, 0],
+            ['strawberry', 'فراولة', 'Fruits', 'asset\img\ingredients\strawberry.png', 1, 1, 1, 1, 1, 0],
+            ['mango', 'مانجو', 'Fruits', 'asset\img\ingredients\mango.png', 1, 1, 1, 1, 1, 0],
+            ['berry', 'التوت', 'Fruits', 'asset\img\ingredients\berry.png', 1, 1, 1, 1, 1, 0],
+
+            // Spices - Additional
+            ['rosemary', 'إكليل الجبل', 'Spices', 'asset\img\ingredients\rosemary.png', 1, 1, 1, 1, 0, 1],
+            ['cilantro', 'كزبرة', 'Spices', 'asset\img\ingredients\cilantro.png', 1, 1, 1, 1, 0, 1],
+            ['soy sauce', 'صلصة الصويا', 'Spices', 'asset\img\ingredients\soy_sauce.png', 1, 1, 1, 1, 0, 1],
+
+            // Dairy - Additional
+            ['cream cheese', 'جبنة كريمية', 'Dairy', 'asset\img\ingredients\cream_cheese.png', 0, 1, 0, 1, 0, 0],
+            ['cream', 'قشطة', 'Dairy', 'asset\img\ingredients\cream.png', 0, 1, 0, 1, 0, 0],
+            ['mascarpone', 'ماسكاربوني', 'Dairy', 'asset\img\ingredients\mascarpone.png', 0, 1, 0, 1, 0, 0],
+
+            // Grains - Additional
+            ['breadcrumbs', 'فتات الخبز', 'Grains', 'asset\img\ingredients\breadcrumbs.png', 1, 0, 1, 1, 0, 0],
+            ['graham cracker', 'بسكويت جراهام', 'Grains', 'asset\img\ingredients\graham_cracker.png', 1, 1, 1, 1, 0, 0],
+            ['ladyfinger', 'بسكويت الإصبع', 'Grains', 'asset\img\ingredients\ladyfinger.png', 1, 0, 1, 1, 0, 0],
+            ['granola', 'جرانولا', 'Grains', 'asset\img\ingredients\granola.png', 1, 1, 1, 1, 0, 0],
+            ['popcorn kernels', 'حبات الفشار', 'Grains', 'asset\img\ingredients\popcorn_kernels.png', 1, 1, 1, 1, 0, 0],
+            ['tortilla chips', 'رقائق التورتيلا', 'Grains', 'asset\img\ingredients\tortilla_chips.png', 1, 1, 1, 1, 0, 0],
+
+            // Beverages / Others
+            ['cocoa', 'كاكاو', 'Others', 'asset\img\ingredients\cocoa.png', 1, 1, 1, 1, 0, 1],
+            ['vanilla', 'فانيليا', 'Others', 'asset\img\ingredients\vanilla.png', 1, 1, 1, 1, 0, 1],
+            ['coffee', 'قهوة', 'Others', 'asset\img\ingredients\coffee.png', 1, 1, 1, 1, 0, 1],
+            ['coffee beans', 'حبوب القهوة', 'Others', 'asset\img\ingredients\coffee_beans.png', 1, 1, 1, 1, 0, 1],
+            ['tea', 'شاي', 'Others', 'asset\img\ingredients\tea.png', 1, 1, 1, 1, 0, 1],
 
             // Others / Basics
             ['herbs', 'أعشاب', 'Others', 'asset\img\ingredients\herbs.png', 1, 1, 1, 1, 0, 1],
             ['chocolate', 'شوكولاتة', 'Others', 'asset\img\ingredients\chocolate.png', 1, 1, 1, 1, 0, 1],
             ['water', 'ماء', 'Others', 'asset\img\ingredients\water.png', 1, 1, 1, 1, 0, 1],
             ['sauce', 'صوص', 'Others', 'asset\img\ingredients\sauce.png', 1, 1, 1, 1, 0, 1],
+            ['tomato sauce', 'صلصة الطماطم', 'Others', 'asset\img\ingredients\tomato_sauce.png', 1, 1, 1, 1, 0, 1],
+            ['salsa', 'صلصة', 'Others', 'asset\img\ingredients\salsa.png', 1, 1, 1, 1, 0, 1],
+            ['jalapeño', 'فلفل حار', 'Others', 'asset\img\ingredients\jalapeno.png', 1, 1, 1, 1, 0, 1],
+            ['almonds', 'لوز', 'Others', 'asset\img\ingredients\almonds.png', 1, 1, 1, 1, 0, 1],
+            ['raisins', 'زبيب', 'Others', 'asset\img\ingredients\raisins.png', 1, 1, 1, 1, 1, 1],
+            ['dried cranberry', 'توت بري مجفف', 'Others', 'asset\img\ingredients\dried_cranberry.png', 1, 1, 1, 1, 1, 1],
+            ['lime', 'ليم', 'Others', 'asset\img\ingredients\lime.png', 1, 1, 1, 1, 1, 1],
         ];
 
         foreach ($ingredients as $i) {
