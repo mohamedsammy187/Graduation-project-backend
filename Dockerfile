@@ -51,5 +51,4 @@ RUN npm install && npm run build
 EXPOSE 8000
 
 # Start Laravel
-CMD php artisan migrate --force || true \
- && php -S 0.0.0.0:${PORT:-8000} -t public
+CMD php artisan migrate --force || true && php -S 0.0.0.0:${PORT:-8000} -t public
