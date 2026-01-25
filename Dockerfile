@@ -7,38 +7,48 @@ RUN apt-get update && apt-get install -y \
     unzip \
     zip \
     libpng-dev \
-    libnig-dev \
+    libonig-dev \
     libxml2-dev \
     libzip-dev \
     libsodium-dev \
     libpq-dev \
     default-mysql-client \
     default-libmysqlclient-dev \
-    libfreetypes-dev \
+    libfreetype6-dev \
     libjpeg62-turbo-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_pgsql pdo_mysql mbstring exif pcntl bcmath gd zip sodium
+    && docker-php-ext-install \
+        pdo_pgsql \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        sodium
 
 # Get Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Node.js and npm
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash && \
-    apt-get update && apt-get install -y nodejs
+# Install Node.js 18
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
+# Copy app
 COPY . .
 
-# Expose port used by php artisan serve
+# Install PHP deps
+RUN composer install --no-dev --optimize-autoloader
+
+# Install JS deps
+RUN npm install && npm run build
+
+# Expose Laravel port
 EXPOSE 8000
 
-# Install PHP and JS dependencies
-RUN composer install
-RUN npm install
-
-
-# Run Laravel migrations and start server
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000cd
+# Start Laravel
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
