@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder; // ✅ 1. Added Import
 
 class Recipe extends Model
 {
@@ -116,5 +117,48 @@ class Recipe extends Model
         }
         
         return response()->json(['answer' => 'Logic here']);
+    }
+
+    // =========================================================================
+    // 🧠 SMART CHAT AI SCOPES (Added)
+    // =========================================================================
+
+    public function scopeSmartSearch(Builder $query, $term)
+    {
+        if (!$term) return $query;
+        $cleanTerm = self::normalizeArabic($term);
+
+        return $query->where(function ($q) use ($term, $cleanTerm) {
+            $q->where('title_en', 'LIKE', "%{$term}%")
+              ->orWhere('title_ar', 'LIKE', "%{$term}%")
+              ->orWhere('title_ar', 'LIKE', "%{$cleanTerm}%")
+              ->orWhereHas('ingredients', function ($subQ) use ($term, $cleanTerm) {
+                  $subQ->where('name_en', 'LIKE', "%{$term}%")
+                       ->orWhere('name_ar', 'LIKE', "%{$term}%")
+                       ->orWhere('name_ar', 'LIKE', "%{$cleanTerm}%");
+              });
+        });
+    }
+
+    public function scopeApplyContext(Builder $query, $filters)
+    {
+        if (!empty($filters['category'])) {
+            $query->where('category', 'LIKE', '%' . $filters['category'] . '%');
+        }
+        if (!empty($filters['meal_type'])) {
+            $query->where('meal_type', 'LIKE', '%' . $filters['meal_type'] . '%');
+        }
+        if (!empty($filters['temperature'])) {
+            $query->where('temperature', $filters['temperature']);
+        }
+        return $query;
+    }
+
+    public static function normalizeArabic($text)
+    {
+        $text = str_replace(['أ', 'إ', 'آ'], 'ا', $text);
+        $text = str_replace('ة', 'ه', $text);
+        $text = str_replace('ى', 'ي', $text);
+        return $text;
     }
 }

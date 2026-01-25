@@ -6,543 +6,655 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
+
+// -----------------------------------------------------------------------------
+// 📦 MODELS IMPORT
+// -----------------------------------------------------------------------------
 use App\Models\Recipe;
 use App\Models\PantryItem;
 use App\Models\ShoppingItem;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\User;
+use App\Models\Category; // Critical for the Category Bridge
 
+/**
+ * Class SmartChatController
+ * * The central brain for the Chef Sage AI assistant.
+ * This controller handles Natural Language Understanding (NLU) via Groq,
+ * translates intents into Database Queries, and formats responses for the UI.
+ */
 class SmartChatController extends Controller
 {
+    /**
+     * @var float Temperature for the AI model (Creativity vs Precision)
+     */
+    private $aiTemperature = 0.1;
+
+    /**
+     * @var string The specific model identifier for Groq
+     */
+    private $aiModel = 'llama-3.1-8b-instant';
+
+    // =========================================================================
+    // 🚀 1. MASTER REQUEST HANDLER
+    // =========================================================================
+
+    /**
+     * Main entry point. Receives the user's prompt and orchestrates the response.
+     * * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function handle(Request $request)
     {
-        $userMessage = $request->input('prompt'); 
+        // 1.1 Setup & Language Detection
         $user = $request->user();
+        $userMessage = $request->input('prompt');
+        // Prioritize explicit lang param, fallback to header, default to 'en'
+        $lang = $request->input('lang', $request->header('Accept-Language', 'en'));
 
-        if (!$userMessage) {
-            return response()->json(['message' => 'Please provide a prompt'], 400);
+        // 1.2 Input Validation
+        if (!$userMessage || trim($userMessage) === '') {
+            return response()->json([
+                'response_type' => 'text',
+                'message' => ($lang === 'ar' ? 'من فضلك اكتب شيئاً لأبحث عنه.' : 'Please provide a prompt.')
+            ], 400);
         }
 
-        // 1. تحليل النية
-        $aiAnalysis = $this->analyzeIntentWithGroq($userMessage);
+        // 1.3 Intent Analysis (The AI Step)
+        // We send the raw text to Groq to get a structured JSON command object
+        $aiAnalysis = $this->analyzeIntentWithGroq($userMessage, $lang);
 
+        // 1.4 Critical Failure Check
         if (isset($aiAnalysis['error'])) {
+            Log::error("SmartChat Groq API Failure", ['error' => $aiAnalysis['error']]);
             return response()->json([
-                'response_type' => 'text', 
-                'message' => 'System currently unavailable. (' . $aiAnalysis['error'] . ')'
+                'response_type' => 'text',
+                'message' => ($lang === 'ar' 
+                    ? 'النظام مشغول حالياً. يرجى المحاولة لاحقاً.' 
+                    : 'System is currently unavailable. Please try again later.')
             ], 500);
         }
 
-        // 2. توجيه الطلب
-        switch ($aiAnalysis['action']) {
-            case 'search_recipe':
-                return $this->searchRecipe($user, $aiAnalysis['filters'], $aiAnalysis['reply_text'] ?? null);
+        // 1.5 Routing Logic
+        try {
+            $action = $aiAnalysis['action'] ?? 'chit_chat';
+            $filters = $aiAnalysis['filters'] ?? [];
+            $replyText = $aiAnalysis['reply_text'] ?? null;
 
-            case 'pantry_suggest':
-                if (!$user) return response()->json(['response_type' => 'text', 'message' => 'Please login to use pantry features. 🔐']);
-                return $this->suggestFromPantry($user, $aiAnalysis['filters'] ?? []);
+            // Log the decision for debugging
+            Log::info("SmartChat Decision", [
+                'user' => $user ? $user->id : 'guest',
+                'action' => $action,
+                'filters' => $filters
+            ]);
 
-            case 'get_pantry':
-                if (!$user) return response()->json(['response_type' => 'text', 'message' => 'Please login to view your pantry. 🔐']);
-                return $this->getPantryContent($user, $aiAnalysis['filters'] ?? []);
+            switch ($action) {
+                case 'search_recipe':
+                    return $this->handleRecipeSearchStrategy($user, $filters, $replyText, $lang);
+                
+                case 'pantry_suggest':
+                    return $this->handlePantrySuggestionStrategy($user, $filters, $lang);
+                
+                case 'get_pantry':
+                    return $this->handleGetPantryStrategy($user, $filters, $lang);
+                
+                case 'get_shopping_list':
+                    return $this->handleGetShoppingListStrategy($user, $filters, $lang);
+                
+                case 'get_full_inventory':
+                    return $this->handleFullInventoryStrategy($user, $lang);
+                
+                case 'get_favorites':
+                    return $this->handleFavoritesStrategy($user, $lang);
+                
+                case 'get_help':
+                    return $this->handleHelpStrategy($lang);
+                
+                case 'chit_chat':
+                default:
+                    return $this->handleChitChatStrategy($replyText, $lang);
+            }
 
-            case 'get_shopping_list':
-                if (!$user) return response()->json(['response_type' => 'text', 'message' => 'Please login to view your shopping list. 🔐']);
-                return $this->getShoppingListContent($user, $aiAnalysis['filters'] ?? []);
-
-            case 'get_full_inventory':
-                if (!$user) return response()->json(['response_type' => 'text', 'message' => 'Please login to check your inventory. 🔐']);
-                return $this->getFullInventory($user);
-
-            case 'get_favorites':
-                if (!$user) return response()->json(['response_type' => 'text', 'message' => 'Please login to view your favorites. 🔐']);
-                return $this->getFavorites($user);
-
-            case 'get_help':
-                return $this->getHelp($aiAnalysis['filters'] ?? []);
-
-            case 'chit_chat':
-            default:
-                $reply = $aiAnalysis['reply_text'] ?? "I'm listening! Tell me what ingredients you have or what you're craving. 😋";
-                return response()->json(['response_type' => 'text', 'message' => $reply]);
+        } catch (\Throwable $e) {
+            // Global Exception Handler to prevent 500 White Screen
+            Log::critical("SmartChat Logic Crash", [
+                'msg' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'response_type' => 'text',
+                'message' => ($lang === 'ar' 
+                    ? "عذراً، حدث خطأ فني أثناء معالجة طلبك." 
+                    : "Sorry, a technical error occurred while processing your request.")
+            ], 500);
         }
     }
 
-    // ---------------------------------------------------------
-    // 🧠 1. GROQ INTELLIGENCE
-    // ---------------------------------------------------------
-    private function analyzeIntentWithGroq($message)
+    // =========================================================================
+    // 🧠 2. INTELLIGENCE LAYER (GROQ API)
+    // =========================================================================
+
+    /**
+     * Communicates with the LLM to convert natural language into structured JSON.
+     */
+    private function analyzeIntentWithGroq($message, $lang)
     {
         $apiKey = env('GROQ_API_KEY');
-        $apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+        if (!$apiKey) return ['error' => 'API Key Config Missing'];
 
-        if (!$apiKey) return ['error' => 'GROQ_API_KEY missing'];
+        $promptLang = ($lang === 'ar' ? 'Arabic' : 'English');
 
-        $systemPrompt = "
-        You are a smart, friendly Query Builder for a Recipe App. 
-        Your goal is to map User Input to the Database Schema EXACTLY.
+        $systemPrompt = <<<EOT
+        You are 'Chef Sage', a database query translator for a Recipe Application.
+        Target Language: {$promptLang}.
         
-        RULES:
-        1. [CONVERSATION & SHORT RESPONSES - PRIORITY] 
-           CHECK THIS FIRST. If the input is 'Okay', 'Yes', 'No', 'Hi', DO NOT SEARCH.
-           - 'Hi', 'Hello', 'Who are you?' -> action='chit_chat', reply_text='Hi there! I am Chef Sage. Ready to cook? 🍳'.
-           - 'Yes', 'Sure', 'Ready', 'I am ready' -> action='chit_chat', reply_text='Awesome! Tell me what ingredients you have or what you are craving. 🥘'.
-           - 'No', 'Nope', 'Nah' -> action='chit_chat', reply_text='Okay, no problem! What would you like to eat instead? 🥗'.
-           - 'Okay', 'Ok', 'Cool', 'Great', 'Thanks', 'Good' -> action='chit_chat', reply_text='You are very welcome! Let me know if you need anything else. 👩‍🍳'.
-           - 'Bye', 'See you', 'See u', 'Cya' -> action='chit_chat', reply_text='See you later! 👋 Happy cooking!'.
+        YOUR JOB: Extract search filters from the user's input.
 
-        2. [SEARCH - EXACT MAPPING] Extract filters.
-           - 'Pasta' -> filters: {'query': 'pasta'}
-           - 'Fish meal' -> filters: {'query': 'fish'} (Clean the query)
+        DATABASE CONTEXT:
+        - Categories: 'Main Course', 'Dessert', 'Drink', 'Snack', 'Salad'.
+        - Synonyms: 
+            'Sweet', 'Cake', 'Treat' -> 'Dessert'
+            'Thirsty', 'Juice', 'Soda' -> 'Drink'
+            'Morning', 'Breakfast' -> meal_type='Breakfast'
         
-        3. [SPECIFIC INFO & CONTEXT]
-           - 'Steps?', 'How to make?', 'Steps for this' -> target_field: 'steps', use_context: true.
-           - 'Time?', 'Duration?' -> target_field: 'time', use_context: true.
-           - 'Ingredients?', 'What do I need?' -> target_field: 'ingredients', use_context: true.
-           - 'Calories?', 'kcal?', 'How many calories' -> target_field: 'calories', use_context: true.
-           - 'Difficulty?', 'How hard is it?', 'Level?' -> target_field: 'difficulty', use_context: true.
-
-        4. [PHYSICAL STATE & WEATHER - PRIORITY]
-           - 'Thirsty', 'Need a drink', 'I am thirty (treat as thirsty)' -> filters: {'category': 'drink'}.
-           - 'It is hot', 'Hot outside' -> filters: {'temperature': 'cold'}.
-           - 'It is cold', 'Winter' -> filters: {'temperature': 'hot'}.
-
-        5. [SEARCH - DIRECT INGREDIENTS] 
-           - 'What can I do if I have eggs and salt?' -> action='search_recipe', filters: {'ingredients': ['egg', 'salt']}
-           - 'Chicken' -> action='search_recipe', filters: {'query': 'chicken'}
-
-        6. [VAGUE HUNGER] 
-           - 'I want to eat', 'I am hungry', 'Suggest something' -> action='search_recipe', filters: {'vague_hunger': true}.
-
-        7. [PANTRY SUGGEST & STRICT MODE] 
-           - 'What can I cook from my pantry?' -> action='pantry_suggest', filters: {'pantry_mode': 'suggest'}.
-           - 'Can I make chicken based on pantry?' -> action='pantry_suggest', filters: {'pantry_mode': 'suggest', 'query': 'chicken'}.
-           - 'Can I cook this?', 'Do I have ingredients?' -> action='pantry_suggest', filters: {'pantry_mode': 'suggest', 'use_context': true}.
-           - '100%', 'Exactly', 'With no missing items', 'Fully match' -> action='pantry_suggest', filters: {'pantry_mode': 'suggest', 'strict_match': true}.
-        
-        8. [PANTRY RE-CHECK]
-           If user implies they updated the pantry externally:
-           - 'I added items', 'I updated my pantry', 'Check again', 'What about now?' -> action='pantry_suggest', filters: {'pantry_mode': 'suggest'}.
-
-        9. [PANTRY CHECK/COUNT/LIST]
-           - 'Do I have sugar?' -> action='get_pantry', filters: {'pantry_mode': 'check', 'query': 'sugar'}.
-           - 'Show pantry', 'What do I have?' -> action='get_pantry', filters: {'pantry_mode': 'list'}.
-        
-        10. [SHOPPING LIST] 
-           - 'Shopping list' -> action='get_shopping_list', filters: {'mode': 'list'}.
-           - 'Check list for milk' -> action='get_shopping_list', filters: {'mode': 'check', 'query': 'milk'}.
-        
-        11. [FAVORITES] 'My favorites' -> action='get_favorites'.
-        12. [HELP] 'Help' -> action='get_help'.
-        13. [FULL INVENTORY] 'How many items in shopping and pantry?' -> action='get_full_inventory'.
-        
-        14. [WRITE PROTECTION] Add/Remove -> action='chit_chat', reply_text='Please use the Pantry/Shopping page to modify items directly. 📝'.
-        
-        15. [DISLIKE/CHANGE] 
-            - 'Another one', 'Not that one', 'Change', 'Don't like this' -> action='search_recipe', filters: {'surprise_me': true, 'exclude_last': true}.
-            
-        16. [CONTEXT] 'This one', 'That recipe' -> action='search_recipe', filters: {'use_context': true}.
+        INTENT RULES:
+        1. 'Hi', 'Hello' -> action='chit_chat', reply_text='Hello! Ready to cook?'.
+        2. 'Pasta' -> action='search_recipe', filters: {'query': 'pasta'}.
+        3. 'I want juice' -> action='search_recipe', filters: {'category': 'Drink'}.
+        4. 'Something sweet' -> action='search_recipe', filters: {'category': 'Dessert'}.
+        5. 'What can I cook?' -> action='pantry_suggest', filters: {'pantry_mode': 'suggest'}.
 
         Response JSON Structure:
         {
-          \"action\": \"search_recipe\" | \"pantry_suggest\" | \"get_pantry\" | \"get_shopping_list\" | \"get_full_inventory\" | \"get_favorites\" | \"get_help\" | \"chit_chat\",
-          \"filters\": {
-             \"query\": \"...\",
-             \"ingredients\": [],
-             \"category\": \"...\",
-             \"meal_type\": \"...\",
-             \"temperature\": \"hot | cold\",
-             \"pantry_mode\": \"...\",
-             \"mode\": \"...\", 
-             \"target_field\": \"...\",
-             \"strict_match\": boolean,
-             \"vague_hunger\": boolean,
-             \"surprise_me\": boolean,
-             \"exclude_last\": boolean,
-             \"use_context\": boolean
+          "action": "search_recipe" | "pantry_suggest" | "get_pantry" | "get_shopping_list" | "get_full_inventory" | "get_favorites" | "get_help" | "chit_chat",
+          "filters": {
+             "query": "string or null",
+             "ingredients": ["array", "of", "strings"],
+             "category": "string or null",
+             "meal_type": "string or null",
+             "target_field": "string or null",
+             "vague_hunger": boolean,
+             "surprise_me": boolean,
+             "use_context": boolean
           },
-          \"reply_text\": \"...\"
+          "reply_text": "Friendly response string"
         }
-        ";
+EOT;
 
         try {
-            $response = Http::withOptions(['verify' => false]) 
+            $response = Http::withOptions(['verify' => false])
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Authorization' => "Bearer {$apiKey}",
                     'Content-Type' => 'application/json',
                 ])
-                ->post($apiUrl, [
-                    'model' => 'llama-3.1-8b-instant', 
+                ->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model' => $this->aiModel,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => $message],
                     ],
-                    'response_format' => ['type' => 'json_object'], 
-                    'temperature' => 0.1 
+                    'response_format' => ['type' => 'json_object'],
+                    'temperature' => $this->aiTemperature
                 ]);
 
             if ($response->successful()) {
-                $data = $response->json();
-                return json_decode($data['choices'][0]['message']['content'], true);
+                return json_decode($response->json()['choices'][0]['message']['content'], true);
             }
-            return ['error' => 'Groq API Error: ' . $response->status()];
+            return ['error' => 'Groq API Status: ' . $response->status()];
 
         } catch (\Exception $e) {
             return ['error' => $e->getMessage()];
         }
     }
 
-    // ---------------------------------------------------------
-    // 🔍 2. SEARCH
-    // ---------------------------------------------------------
-    private function searchRecipe($user, $filters, $aiReply = null)
+    // =========================================================================
+    // 🔍 3. RECIPE SEARCH STRATEGY (THE CORE LOGIC)
+    // =========================================================================
+
+    /**
+     * Executes the recipe search with multiple fallback layers.
+     * Layer 1: Strict Search (Category ID + Ingredients).
+     * Layer 2: Text Fallback (Search category name in Title).
+     */
+    private function handleRecipeSearchStrategy($user, $filters, $aiReply, $lang)
     {
-        // 1. Time-Based Suggestion
-        if (!empty($filters['vague_hunger'])) {
-            $currentHour = (int) date('H'); 
-            if ($currentHour >= 5 && $currentHour < 12) {
-                $filters['meal_type'] = 'breakfast';
-                $aiReply = "Good morning! ☀️ Since it's breakfast time, I recommend starting your day with this:";
-            } elseif ($currentHour >= 12 && $currentHour < 17) {
-                $filters['meal_type'] = 'lunch';
-                $aiReply = "It's lunch time! 🕛 How about this meal to keep you going:";
-            } else {
-                $filters['meal_type'] = 'dinner';
-                $aiReply = "Good evening! 🌙 For dinner tonight, I suggest you try this:";
-            }
-        }
+        // 3.1 Normalize Inputs (The Synonym Bridge)
+        $filters = $this->normalizeFilters($filters);
 
-        // 2. Context Handling
+        // 3.2 Context Retrieval (Did user say "steps for that"?)
         if (!empty($filters['use_context']) && empty($filters['query']) && $user) {
-            $cacheKey = 'last_suggestion_' . $user->id;
-            if (Cache::has($cacheKey)) $filters['query'] = Cache::get($cacheKey);
-            else return response()->json(['response_type' => 'text', 'message' => "I'm not sure which recipe you're referring to. Could you remind me? 🤔"]);
+            $lastTitle = Cache::get('last_suggestion_' . $user->id);
+            if ($lastTitle) {
+                $filters['query'] = $lastTitle;
+            } else {
+                return response()->json([
+                    'response_type' => 'text', 
+                    'message' => ($lang === 'ar' ? "عن أي وصفة تتحدث؟ 🤔" : "Which recipe are you referring to? 🤔")
+                ]);
+            }
         }
 
-        // 3. Surprise Me
+        // 3.3 Time-Based Suggestions (Vague Hunger)
+        if (!empty($filters['vague_hunger'])) {
+            $sug = $this->getTimeBasedSuggestion($lang);
+            $filters['meal_type'] = $sug['meal_type'];
+            if (!$aiReply) $aiReply = $sug['message'];
+        }
+
+        // 3.4 Surprise Me
         if (!empty($filters['surprise_me'])) {
-            $query = Recipe::with('ingredients');
-            if (!empty($filters['exclude_last']) && $user) {
-                $cacheKey = 'last_suggestion_' . $user->id;
-                if (Cache::has($cacheKey)) {
-                    $lastTitle = Cache::get($cacheKey);
-                    $query->where('title', '!=', $lastTitle);
-                }
-            }
-            $randomRecipe = $query->inRandomOrder()->first();
-            if ($randomRecipe) {
-                if ($user) Cache::put('last_suggestion_' . $user->id, $randomRecipe->title, 600);
-                return response()->json(['response_type' => 'recipe_card', 'message' => "How about something completely different? Surprise! 🎉", 'recipe' => $randomRecipe]);
-            }
+            return $this->executeSurpriseSearch($user, $lang);
         }
 
-        // 4. Build Query
-        $query = Recipe::query();
-        $hasFilters = false;
+        // ---------------------------------------------------------
+        // 🚀 PHASE 1: EXECUTE HYBRID SEARCH
+        // ---------------------------------------------------------
+        $recipe = $this->executeHybridSearch($filters);
 
-        if (!empty($filters['category'])) { $query->where('category', 'LIKE', '%' . $filters['category'] . '%'); $hasFilters = true; }
-        if (!empty($filters['meal_type'])) { $query->where('meal_type', 'LIKE', '%' . $filters['meal_type'] . '%'); $hasFilters = true; }
-        
-        if (!empty($filters['temperature'])) {
-            $query->where('temperature', $filters['temperature']);
-            $hasFilters = true;
-            if (!$aiReply) $aiReply = "Here is something " . $filters['temperature'] . " to enjoy! 🌡️";
-        }
-
-        if (!empty($filters['ingredients'])) {
-            $ingredients = $filters['ingredients'];
-            $query->where(function (Builder $q) use ($ingredients) {
-                foreach ($ingredients as $ing) {
-                    $cleanIng = trim($ing);
-                    if (Str::endsWith($cleanIng, 's')) { $cleanIng = Str::singular($cleanIng); }
-                    $q->whereHas('ingredients', function ($subQ) use ($cleanIng) { 
-                        $subQ->where('name', 'LIKE', "%{$cleanIng}%"); 
-                    });
-                }
-            });
-            $hasFilters = true;
-        }
-
-        if (!empty($filters['query'])) {
-            $word = trim($filters['query']);
-            $cleanWord = (Str::endsWith($word, 's')) ? Str::singular($word) : $word;
+        // ---------------------------------------------------------
+        // ⚠️ PHASE 2: CATEGORY TEXT FALLBACK
+        // If searching for "Category: Drink" returned 0 results (maybe mapping issue),
+        // we try searching for "Drink" inside the Title/Description.
+        // ---------------------------------------------------------
+        if (!$recipe && !empty($filters['category'])) {
+            Log::info("Strict Category Search failed. Attempting text fallback for: " . $filters['category']);
             
-            $query->where(function (Builder $q) use ($word, $cleanWord) {
-                $q->where('title', 'LIKE', "%{$word}%")
-                  ->orWhere('title', 'LIKE', "%{$cleanWord}%") 
-                  ->orWhereHas('ingredients', function ($subQ) use ($cleanWord) { 
-                      $subQ->where('name', 'LIKE', "%{$cleanWord}%"); 
-                  });
-            });
-            $hasFilters = true;
+            // Move category to query to force a text-based search
+            $filters['query'] = $filters['category'];
+            unset($filters['category']); // Remove strict filter
+            
+            $recipe = $this->executeHybridSearch($filters);
         }
 
-        if (!$hasFilters) {
-             return response()->json(['response_type' => 'text', 'message' => "I'm ready to cook! 👨‍🍳 Tell me what ingredients you have (like 'eggs') or what you're craving."]);
-        }
-
-        $recipe = $query->with('ingredients')->inRandomOrder()->first();
-
-        if (!$recipe && !empty($filters['category']) && (stripos($filters['category'], 'dessert') !== false || stripos($filters['category'], 'sweet') !== false)) {
-            $recipe = Recipe::whereHas('ingredients', function ($q) {
-                $q->where('name', 'LIKE', '%sugar%')->orWhere('name', 'LIKE', '%honey%');
-            })->with('ingredients')->inRandomOrder()->first();
-        }
-
+        // 3.5 No Results Handling
         if (!$recipe) {
-            $missingItem = $filters['query'] ?? implode(' & ', $filters['ingredients'] ?? []) ?? 'that';
-            return response()->json(['response_type' => 'text', 'message' => "Hmm, I couldn't find a perfect match for '{$missingItem}'. 🧐 Try searching for a different ingredient!"]);
+            $term = $filters['query'] ?? ($filters['category'] ?? 'your request');
+            return response()->json([
+                'response_type' => 'text',
+                'message' => ($lang === 'ar' 
+                    ? "لم أجد وصفة تطابق '{$term}'. 🧐 جرب البحث عن شيء آخر!" 
+                    : "I couldn't find a match for '{$term}'. 🧐 Try searching for something else!")
+            ]);
         }
 
-        if ($user) Cache::put('last_suggestion_' . $user->id, $recipe->title, 600);
-
-        // --- Target Field Response ---
-        $targetField = $filters['target_field'] ?? null;
-        if ($targetField) {
-            if ($targetField === 'steps') {
-                $steps = is_string($recipe->steps) ? json_decode($recipe->steps, true) : $recipe->steps;
-                if (!is_array($steps)) $steps = [$recipe->steps];
-                return response()->json(['response_type' => 'steps_list', 'message' => "Here are the steps to prepare {$recipe->title}: 👨‍🍳", 'steps' => $steps]);
-            }
-            $responseText = "";
-            switch ($targetField) {
-                case 'time': $responseText = "It takes about {$recipe->time} to prepare {$recipe->title}. ⏱️"; break;
-                case 'calories': $responseText = "{$recipe->title} contains approximately {$recipe->calories} calories. 🔥"; break;
-                case 'difficulty': $responseText = "{$recipe->title} is considered {$recipe->difficulty} to make. 💪"; break;
-                case 'ingredients': $ings = $recipe->ingredients->pluck('name')->implode(', '); $responseText = "You will need: {$ings} for {$recipe->title}. 🛒"; break;
-                default: return response()->json(['response_type' => 'recipe_card', 'message' => "Found {$recipe->title} for you.", 'recipe' => $recipe]);
-            }
-            return response()->json(['response_type' => 'text', 'message' => $responseText]);
+        // 3.6 Save Context
+        if ($user) {
+            Cache::put('last_suggestion_' . $user->id, $recipe->title_en, 600);
         }
 
-        return response()->json(['response_type' => 'recipe_card', 'message' => $aiReply ?? "Look what I found for you! 🍽️", 'recipe' => $recipe]);
+        // 3.7 Handle Specific Field Requests (Steps, Calories)
+        if (!empty($filters['target_field'])) {
+            return $this->formatSpecificFieldResponse($recipe, $filters['target_field'], $lang);
+        }
+
+        // 3.8 Return Full Recipe Card
+        return response()->json([
+            'response_type' => 'recipe_card',
+            'message' => $aiReply ?? ($lang === 'ar' ? "وجدت لك هذه الوصفة! 🍽️" : "I found this for you! 🍽️"),
+            'recipe' => $recipe
+        ]);
     }
 
-    // ---------------------------------------------------------
-    // 🏠 3. PANTRY SUGGEST (LIST MODE)
-    // ---------------------------------------------------------
-    private function suggestFromPantry($user, $filters = [])
+    /**
+     * THE HYBRID QUERY BUILDER
+     * Connects Categories, Ingredients, and Text search safely.
+     */
+    private function executeHybridSearch($filters)
     {
-        $mode = $filters['pantry_mode'] ?? 'suggest';
-        $strictMatch = $filters['strict_match'] ?? false;
+        $query = Recipe::query();
+
+        // A. CATEGORY LOGIC (The Manual Bridge)
+        // -------------------------------------------------
+        if (!empty($filters['category'])) {
+            $catName = $filters['category'];
+            
+            // Step 1: Look up the ID in the 'categories' table
+            // We search both English and Arabic names
+            $categoryIds = Category::where('name_en', 'LIKE', "%{$catName}%")
+                                   ->orWhere('name_ar', 'LIKE', "%{$catName}%")
+                                   ->pluck('id')
+                                   ->toArray();
+
+            if (!empty($categoryIds)) {
+                // If we found IDs (e.g., Drink = 3), search using category_id
+                $query->whereIn('category_id', $categoryIds);
+            } else {
+                // Fallback: If Category table doesn't have it, check the text column in recipes table
+                $query->where('category', 'LIKE', "%{$catName}%");
+            }
+        }
+
+        // B. MEAL TYPE LOGIC
+        // -------------------------------------------------
+        if (!empty($filters['meal_type'])) {
+            $query->where('meal_type', 'LIKE', '%' . $filters['meal_type'] . '%');
+        }
+
+        // C. INGREDIENTS LOGIC (Dual Search)
+        // -------------------------------------------------
+        if (!empty($filters['ingredients'])) {
+            foreach ($filters['ingredients'] as $ing) {
+                $query->where(function(Builder $q) use ($ing) {
+                    // 1. Search JSON Column (Safe fallback)
+                    $q->where('ingredients', 'LIKE', "%{$ing}%");
+                    
+                    // 2. Search Relationship (If pivot exists)
+                    // We wrap this in a check implicitly via whereHas logic
+                    $q->orWhereHas('ingredients', function($relQ) use ($ing) {
+                        $relQ->where('name_en', 'LIKE', "%{$ing}%")
+                             ->orWhere('name_ar', 'LIKE', "%{$ing}%");
+                    });
+                });
+            }
+        }
+
+        // D. TEXT SEARCH (Universal)
+        // -------------------------------------------------
+        if (!empty($filters['query'])) {
+            $word = $filters['query'];
+            $query->where(function(Builder $q) use ($word) {
+                $q->where('title_en', 'LIKE', "%{$word}%")
+                  ->orWhere('title_ar', 'LIKE', "%{$word}%")
+                  ->orWhere('description_en', 'LIKE', "%{$word}%")
+                  ->orWhere('description_ar', 'LIKE', "%{$word}%");
+            });
+        }
+
+        // Eager load ingredients to prevent N+1 queries later
+        return $query->with('ingredients')->inRandomOrder()->first();
+    }
+
+    /**
+     * Normalizes User Filters (Synonym Bridge)
+     */
+    private function normalizeFilters($filters)
+    {
+        if (!empty($filters['category'])) {
+            $c = strtolower($filters['category']);
+            
+            // Map common words to DB Category Names
+            if (Str::contains($c, ['sweet', 'cake', 'cookie', 'dessert', 'chocolate'])) {
+                $filters['category'] = 'Dessert';
+            }
+            if (Str::contains($c, ['drink', 'juice', 'soda', 'beverage', 'water', 'thirsty'])) {
+                $filters['category'] = 'Drink'; // Note: Your DB uses singular "Drink" (ID 3)
+            }
+            if (Str::contains($c, ['snack', 'bite', 'chips'])) {
+                $filters['category'] = 'Snack';
+            }
+        }
         
-        $pantryItems = PantryItem::where('user_id', $user->id)
-            ->pluck('item_name')
-            ->map(fn($i) => strtolower(trim($i))) 
-            ->toArray();
-
-        $mustHave = null;
-        if (!empty($filters['use_context']) && $user) {
-            $mustHave = Cache::get('last_suggestion_' . $user->id);
-        }
-        if (empty($mustHave) && !empty($filters['query'])) {
-            $word = trim($filters['query']);
-            if (in_array(strtolower($word), ['this', 'it', 'the meal', 'this meal']) && $user) {
-                $mustHave = Cache::get('last_suggestion_' . $user->id);
-            } else {
-                $mustHave = (Str::endsWith($word, 's')) ? Str::singular($word) : $word;
-            }
+        // Normalize Ingredients (remove plurals)
+        if (!empty($filters['ingredients'])) {
+            $filters['ingredients'] = array_map(function($i) {
+                return Str::singular(trim($i));
+            }, $filters['ingredients']);
         }
 
-        if (empty($pantryItems) && !$mustHave) return response()->json(['response_type' => 'text', 'message' => "Your pantry looks a bit empty! 🛒 Try adding items."]);
+        return $filters;
+    }
 
-        $recipes = Recipe::with('ingredients')->get();
-        $suggestedRecipes = [];
+    // =========================================================================
+    // 🏠 4. PANTRY & LIST STRATEGIES
+    // =========================================================================
 
-        foreach ($recipes as $recipe) {
-            $recipeIngredients = $recipe->ingredients->pluck('name')
-                ->map(fn($i) => strtolower(trim($i)))
-                ->toArray();
+    /**
+     * Interfaces with RecipeController to find matching recipes.
+     */
+    private function handlePantrySuggestionStrategy($user, $filters, $lang)
+    {
+        if (!$user) return $this->sendLoginRequiredResponse($lang);
+
+        try {
+            // Instantiate existing controller to reuse logic
+            $recipeController = new \App\Http\Controllers\RecipeController();
             
-            // Check Must Have
-            if ($mustHave) {
-                if ($filters['use_context'] ?? false) {
-                    if (stripos($recipe->title, $mustHave) === false) continue;
-                } else {
-                    $hasIngredient = false;
-                    foreach ($recipeIngredients as $ing) { if (str_contains($ing, $mustHave)) { $hasIngredient = true; break; } }
-                    if (!$hasIngredient && stripos($recipe->title, $mustHave) === false) continue;
-                }
+            // Mock a request object
+            $req = new Request();
+            $req->setUserResolver(fn() => $user);
+            $req->merge([
+                'lang' => $lang,
+                'allow_missing_one' => 'true' // Force lenient matching
+            ]);
+            
+            // Set locale for the app
+            app()->setLocale($lang);
+
+            // Call the matching logic
+            $res = $recipeController->matchPantry($req);
+            $data = $res->getData(true);
+            $recipes = $data['data'] ?? [];
+
+            if (empty($recipes)) {
+                return response()->json([
+                    'response_type' => 'text',
+                    'message' => ($lang === 'ar' 
+                        ? "مكونات المخزن الحالية لا تكفي لطبخ وجبة كاملة. 🛒 حاول إضافة بعض الأساسيات!" 
+                        : "Your current pantry items aren't enough for a full meal. 🛒 Try adding some basics!")
+                ]);
             }
 
-            if (empty($recipeIngredients)) continue;
-            
-            // Check matches
-            $existingCount = 0;
-            foreach ($recipeIngredients as $rIng) {
-                foreach ($pantryItems as $pItem) {
-                    if (str_contains($rIng, $pItem) || str_contains($pItem, $rIng)) {
-                        $existingCount++;
-                        break; 
-                    }
-                }
+            // Cache context
+            if (isset($recipes[0]['title'])) {
+                Cache::put('last_suggestion_' . $user->id, $recipes[0]['title'], 600);
             }
 
-            $totalIngredients = count($recipeIngredients);
-            $missingCount = $totalIngredients - $existingCount;
-            
-            // --- LOGIC: Strict vs Normal ---
-            $isCandidate = false;
-            
-            if ($strictMatch) {
-                if ($missingCount === 0) $isCandidate = true;
-            } else {
-                if ($missingCount <= 1) $isCandidate = true;
-            }
-
-            if ($isCandidate) {
-                // Calculate missing items for this specific recipe
-                $missingItems = array_values(array_diff($recipeIngredients, $pantryItems));
-                
-                $matchPercentage = ($totalIngredients > 0) ? round(($existingCount / $totalIngredients) * 100) : 0;
-                $suggestedRecipes[] = [
-                    'recipe' => $recipe, 
-                    'match' => $matchPercentage,
-                    'missing' => $missingItems // Store missing items here
-                ];
-            }
-        }
-
-        if ($mode === 'count_possible') {
-            $count = count($suggestedRecipes);
-            if ($count > 0) {
-                Cache::put('last_suggestion_' . $user->id, $suggestedRecipes[0]['recipe']->title, 600);
-                return response()->json(['response_type' => 'text', 'message' => "Good news! Based on your pantry, you can make roughly {$count} meals. 🍳"]);
-            } else {
-                return response()->json(['response_type' => 'text', 'message' => "I couldn't find a complete meal with your current items. Maybe check your shopping list? 📝"]);
-            }
-        }
-
-        // --- RETURN LIST (With Missing Items Injection) ---
-        if (!empty($suggestedRecipes)) {
-            // Sort by match % desc
-            usort($suggestedRecipes, fn($a, $b) => $b['match'] <=> $a['match']);
-            
-            // [FIXED] Transform array to include missing_items inside recipe object
-            $finalRecipes = array_map(function($item) {
-                $recipeData = $item['recipe']->toArray();
-                $recipeData['missing_items'] = $item['missing']; // Inject missing items
-                return $recipeData;
-            }, $suggestedRecipes);
-
-            // Cache the top one for context
-            Cache::put('last_suggestion_' . $user->id, $finalRecipes[0]['title'], 600);
-
-            $msg = $strictMatch 
-                ? "Here are the meals you can make fully (100%)! 🎉" 
-                : "Here is what you can cook based on your pantry: 🍳";
+            // Format for Frontend (Add missing_items tags)
+            $recipes = array_map(function($r) {
+                $r['missing_items'] = isset($r['missing_ingredients']) 
+                    ? collect($r['missing_ingredients'])->pluck('name')->toArray() 
+                    : [];
+                return $r;
+            }, $recipes);
 
             return response()->json([
                 'response_type' => 'recipes_list',
-                'message' => $msg,
-                'recipes' => array_slice($finalRecipes, 0, 10), // Limit to top 10
-                'count' => count($finalRecipes)
+                'message' => ($lang === 'ar' ? "إليك ما يمكنك طبخه: 🍳" : "Here is what you can cook: 🍳"),
+                'recipes' => array_slice($recipes, 0, 10),
+                'count' => count($recipes)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Pantry Logic Error: " . $e->getMessage());
+            return response()->json([
+                'response_type' => 'text',
+                'message' => ($lang === 'ar' ? "حدث خطأ أثناء فحص المخزن." : "An error occurred checking the pantry.")
             ]);
         }
-        
-        if ($mustHave) {
-             return response()->json(['response_type' => 'text', 'message' => "I couldn't find a suitable recipe with '{$mustHave}' based on your pantry."]);
-        }
-
-        return response()->json(['response_type' => 'text', 'message' => "I couldn't find a good match for your pantry items right now (missing more than 1 item). 🤔"]);
     }
 
-    // ---------------------------------------------------------
-    // 📋 4. GET PANTRY
-    // ---------------------------------------------------------
-    private function getPantryContent($user, $filters)
+    private function handleGetPantryStrategy($user, $filters, $lang)
     {
-        $mode = $filters['pantry_mode'] ?? 'list'; 
+        if (!$user) return $this->sendLoginRequiredResponse($lang);
 
-        if ($mode === 'check' && !empty($filters['query'])) {
-            $itemToCheck = trim($filters['query']); 
-            if (Str::endsWith($itemToCheck, 's')) $itemToCheck = Str::singular($itemToCheck);
-
-            $existsInPantry = PantryItem::where('user_id', $user->id)->where('item_name', 'LIKE', "%{$itemToCheck}%")->exists();
-            if ($existsInPantry) return response()->json(['response_type' => 'text', 'message' => "Yes, you have '{$itemToCheck}' in your pantry! ✅"]);
-
-            $existsInShopping = ShoppingItem::where('user_id', $user->id)->where('item_name', 'LIKE', "%{$itemToCheck}%")->exists();
-            if ($existsInShopping) return response()->json(['response_type' => 'text', 'message' => "You don't have '{$itemToCheck}' in the pantry, but it IS on your shopping list! 📝"]);
-
-            return response()->json(['response_type' => 'text', 'message' => "Nope, I couldn't find '{$itemToCheck}' anywhere. ❌"]);
+        // Specific Item Check Mode
+        if (!empty($filters['query'])) {
+            $item = Str::singular(trim($filters['query']));
+            
+            $exists = PantryItem::where('user_id', $user->id)
+                ->where('item_name', 'LIKE', "%{$item}%")
+                ->exists();
+            
+            if ($exists) {
+                return response()->json([
+                    'response_type' => 'text', 
+                    'message' => ($lang === 'ar' ? "نعم، '{$item}' موجود في المخزن! ✅" : "Yes, you have '{$item}' in your pantry! ✅")
+                ]);
+            }
+            
+            return response()->json([
+                'response_type' => 'text', 
+                'message' => ($lang === 'ar' ? "لا، '{$item}' غير موجود. ❌" : "No, '{$item}' is missing. ❌")
+            ]);
         }
 
+        // List Mode
         $items = PantryItem::where('user_id', $user->id)->pluck('item_name')->toArray();
         $count = count($items);
-        
-        if ($mode === 'count') {
-             return response()->json(['response_type' => 'text', 'message' => "You currently have {$count} items stored in your pantry."]);
-        }
 
         return response()->json([
-            'response_type' => 'pantry_list', 
-            'message' => $count > 0 ? "Here is everything in your pantry:" : "Your pantry is empty.", 
+            'response_type' => 'pantry_list',
+            'message' => $count > 0 
+                ? ($lang === 'ar' ? "إليك محتويات مخزنك:" : "Here is your Pantry:") 
+                : ($lang === 'ar' ? "مخزنك فارغ." : "Your pantry is empty."),
             'pantry' => ['items' => $items, 'count' => $count]
         ]);
     }
 
-    // ---------------------------------------------------------
-    // 🛒 5. GET SHOPPING LIST
-    // ---------------------------------------------------------
-    private function getShoppingListContent($user, $filters)
+    private function handleGetShoppingListStrategy($user, $filters, $lang)
     {
-        $mode = $filters['mode'] ?? 'list';
-
-        if ($mode === 'check' && !empty($filters['query'])) {
-            $itemToCheck = Str::singular(trim($filters['query']));
-            $exists = ShoppingItem::where('user_id', $user->id)->where('item_name', 'LIKE', "%{$itemToCheck}%")->exists();
-            return response()->json(['response_type' => 'text', 'message' => $exists ? "Yes! '{$itemToCheck}' is already on your shopping list. 📝" : "No, '{$itemToCheck}' is not on the list yet."]);
-        }
+        if (!$user) return $this->sendLoginRequiredResponse($lang);
 
         $items = ShoppingItem::where('user_id', $user->id)->get();
-        $count = $items->count();
-
-        if ($mode === 'count') {
-            return response()->json(['response_type' => 'text', 'message' => "You have {$count} items on your shopping list."]);
-        }
-
         return response()->json([
-            'response_type' => 'shopping_list', 
-            'message' => $items->isNotEmpty() ? "Here is your shopping list:" : "Your shopping list is clean! 🛒", 
-            'shopping' => ['items' => $items, 'count' => $count]
+            'response_type' => 'shopping_list',
+            'message' => $items->count() > 0 
+                ? ($lang === 'ar' ? "قائمة التسوق الخاصة بك:" : "Your Shopping List:") 
+                : ($lang === 'ar' ? "قائمة التسوق فارغة. 🛒" : "Shopping list is empty. 🛒"),
+            'shopping' => ['items' => $items, 'count' => $items->count()]
         ]);
     }
 
-    // ---------------------------------------------------------
-    // 📦 6. GET FULL INVENTORY
-    // ---------------------------------------------------------
-    private function getFullInventory($user)
+    private function handleFullInventoryStrategy($user, $lang)
     {
+        if (!$user) return $this->sendLoginRequiredResponse($lang);
+
         $pantryItems = PantryItem::where('user_id', $user->id)->pluck('item_name')->toArray();
-        $shoppingItems = ShoppingItem::where('user_id', $user->id)->get(); 
+        $shoppingItems = ShoppingItem::where('user_id', $user->id)->get();
 
         return response()->json([
-            'response_type' => 'full_inventory', 
-            'message' => "Here is your full inventory summary: 📊",
+            'response_type' => 'full_inventory',
+            'message' => ($lang === 'ar' ? "الملخص الكامل:" : "Full Inventory Summary:"),
             'pantry' => ['items' => $pantryItems, 'count' => count($pantryItems)],
             'shopping' => ['items' => $shoppingItems, 'count' => $shoppingItems->count()]
         ]);
     }
 
-    // ---------------------------------------------------------
-    // ❤️ 7. GET FAVORITES
-    // ---------------------------------------------------------
-    private function getFavorites($user)
+    private function handleFavoritesStrategy($user, $lang)
     {
-        $favorites = $user->favorites()->get();
-        if ($favorites->isEmpty()) return response()->json(['response_type' => 'text', 'message' => "You haven't favorited any recipes yet. ❤️ Start exploring!"]);
+        if (!$user) return $this->sendLoginRequiredResponse($lang);
 
+        $favs = $user->favorites()->get();
         return response()->json([
-            'response_type' => 'favorites_list', 
-            'message' => "Here are your favorite recipes: ❤️", 
-            'favorites' => ['recipes' => $favorites, 'count' => $favorites->count()]
+            'response_type' => 'favorites_list',
+            'message' => $favs->count() > 0 
+                ? ($lang === 'ar' ? "وصفاتك المفضلة: ❤️" : "Your Favorites: ❤️") 
+                : ($lang === 'ar' ? "لا توجد مفضلات بعد." : "No favorites yet."),
+            'favorites' => ['recipes' => $favs, 'count' => $favs->count()]
         ]);
     }
 
-    // ---------------------------------------------------------
-    // 💡 8. HELP
-    // ---------------------------------------------------------
-    private function getHelp($filters)
+    // =========================================================================
+    // 🛠️ 5. HELPER METHODS
+    // =========================================================================
+
+    /**
+     * Safely formats specific fields (like Steps) which might be JSON or String.
+     */
+    private function formatSpecificFieldResponse($recipe, $field, $lang)
     {
-        return response()->json(['response_type' => 'text', 'message' => "👋 **How can I help?**\n\n1. **Recipes:** 'Make Burger', 'Steps for Pizza'.\n2. **Pantry:** 'What do I have?'.\n3. **Favorites:** 'Show my favorites'.\n4. **Shopping:** 'Check list'."]);
+        $title = $lang === 'ar' ? ($recipe->title_ar ?? $recipe->title_en) : $recipe->title_en;
+
+        switch ($field) {
+            case 'steps':
+                $stepsData = $recipe->steps;
+                // Decode if string
+                if (is_string($stepsData)) {
+                    $decoded = json_decode($stepsData, true);
+                    $stepsData = $decoded ?: [$stepsData];
+                }
+                
+                // Extract Language
+                $finalSteps = [];
+                if (is_array($stepsData)) {
+                    if ($lang === 'ar' && isset($stepsData['ar'])) $finalSteps = $stepsData['ar'];
+                    elseif (isset($stepsData['en'])) $finalSteps = $stepsData['en'];
+                    else $finalSteps = $stepsData;
+                } else {
+                    $finalSteps = [$stepsData];
+                }
+                
+                // Ensure Array
+                if (!is_array($finalSteps)) $finalSteps = [$finalSteps];
+
+                return response()->json([
+                    'response_type' => 'steps_list',
+                    'message' => ($lang === 'ar' ? "خطوات تحضير {$title}:" : "Steps for {$title}:"),
+                    'steps' => $finalSteps
+                ]);
+
+            case 'time':
+                return response()->json(['response_type' => 'text', 'message' => "Time required: {$recipe->time}."]);
+
+            case 'calories':
+                return response()->json(['response_type' => 'text', 'message' => "Calories: {$recipe->calories}."]);
+
+            case 'ingredients':
+                 $ingText = "Ingredients listed below.";
+                 // Try to get relation data first
+                 if ($recipe->relationLoaded('ingredients') && $recipe->ingredients->isNotEmpty()) {
+                     $ingText = $recipe->ingredients->pluck('name_en')->implode(', ');
+                 }
+                return response()->json(['response_type' => 'text', 'message' => "Ingredients: {$ingText}"]);
+
+            default:
+                return response()->json([
+                    'response_type' => 'recipe_card', 
+                    'message' => "Here is {$title}:", 
+                    'recipe' => $recipe
+                ]);
+        }
+    }
+
+    private function executeSurpriseSearch($user, $lang)
+    {
+        $query = Recipe::with('ingredients');
+        if ($user) {
+            $last = Cache::get('last_suggestion_' . $user->id);
+            if ($last) $query->where('title_en', '!=', $last);
+        }
+        $recipe = $query->inRandomOrder()->first();
+        
+        return response()->json([
+            'response_type' => 'recipe_card',
+            'message' => ($lang === 'ar' ? "مفاجأة! 🎉" : "Surprise! 🎉"),
+            'recipe' => $recipe
+        ]);
+    }
+
+    private function getTimeBasedSuggestion($lang)
+    {
+        $h = Carbon::now()->hour;
+        if ($h >= 5 && $h < 11) return ['meal_type' => 'breakfast', 'message' => ($lang==='ar' ? 'فطور:' : 'Breakfast idea:')];
+        if ($h >= 11 && $h < 17) return ['meal_type' => 'lunch', 'message' => ($lang==='ar' ? 'غداء:' : 'Lunch idea:')];
+        return ['meal_type' => 'dinner', 'message' => ($lang==='ar' ? 'عشاء:' : 'Dinner idea:')];
+    }
+
+    private function handleChitChatStrategy($reply, $lang)
+    {
+        $default = $lang === 'ar' ? "مرحباً! أنا جاهز للمساعدة." : "Hi! I'm ready to help you cook.";
+        return response()->json(['response_type' => 'text', 'message' => $reply ?? $default]);
+    }
+
+    private function handleHelpStrategy($lang)
+    {
+        return response()->json([
+            'response_type' => 'text',
+            'message' => ($lang === 'ar' 
+                ? "💡 **أوامر المساعد:**\n1. البحث: 'دجاج', 'بيتزا'\n2. التصنيفات: 'عصير', 'حلويات'\n3. المخزن: 'ماذا أطبخ؟'" 
+                : "💡 **Commands:**\n1. Search: 'Chicken', 'Pizza'\n2. Category: 'Juice', 'Sweet'\n3. Pantry: 'What can I cook?'")
+        ]);
+    }
+
+    private function sendLoginRequiredResponse($lang)
+    {
+        return response()->json([
+            'response_type' => 'text', 
+            'message' => ($lang === 'ar' ? 'يرجى تسجيل الدخول أولاً. 🔐' : 'Please login first. 🔐')
+        ]);
     }
 }
